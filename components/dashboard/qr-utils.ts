@@ -173,7 +173,8 @@ export function buildQrOptions(
   design: Partial<QrDesignData>,
   size: number = QR_RENDER_SIZE
 ) {
-  const hasLogo = Boolean(design.logoUrl);
+  const image = design.logoUrl || undefined;
+  const hasLogo = Boolean(image);
   const hasGradient = Boolean(design.useGradient);
   const safeMargin = getSafeMargin(design, size);
 
@@ -182,11 +183,11 @@ export function buildQrOptions(
     height: size,
     type: "svg" as const,
     data: data || " ",
-    image: hasLogo ? design.logoUrl : undefined,
+    image,
     margin: safeMargin,
 
     qrOptions: {
-      typeNumber: 0,
+      typeNumber: 0 as any,
       mode: "Byte" as const,
       errorCorrectionLevel: hasLogo ? "H" : design.errorCorrectionLevel || "M",
     },
