@@ -37,7 +37,7 @@ export type QrDesignData = {
   dotsStyle: DotStyle;
   cornersStyle: CornerStyle;
   errorCorrectionLevel: "L" | "M" | "Q" | "H";
-  logoUrl: string;
+  logoUrl: string | null;
   logoSize: number;
 };
 
@@ -156,14 +156,16 @@ export default function CreateQrDesign({
 
     const reader = new FileReader();
     reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setDesign((prev) => ({
-          ...prev,
-          logoUrl: reader.result,
-          errorCorrectionLevel: "H",
-        }));
-      }
-    };
+    const result = reader.result;
+
+    if (typeof result === "string") {
+      setDesign((prev) => ({
+        ...prev,
+        logoUrl: result,
+        errorCorrectionLevel: "H",
+      }));
+    }
+  };
     reader.readAsDataURL(file);
   };
 

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -206,17 +207,19 @@ export default function HomePage() {
             }`}
           >
             <div
-              className="flex items-center gap-3 group cursor-pointer"
-              onClick={scrollToTop}
-            >
-              <div className="relative w-10 h-10 flex items-center justify-center">
-                <div className="absolute inset-0 bg-gradient-to-tr from-cyan-400 to-fuchsia-500 rounded-lg rotate-12 group-hover:rotate-45 transition-transform duration-500" />
-                <QrCode className="relative w-6 h-6 text-white" />
-              </div>
-              <span className="text-xl font-bold tracking-tighter uppercase">
-                AETHER<span className="text-cyan-400">QR</span>
-              </span>
-            </div>
+  className="flex items-center gap-3 group cursor-pointer"
+  onClick={() => {
+  window.location.href = "/";
+}}
+>
+  <div className="relative w-10 h-10 flex items-center justify-center">
+    <div className="absolute inset-0 bg-gradient-to-tr from-cyan-400 to-fuchsia-500 rounded-lg rotate-12 group-hover:rotate-45 transition-transform duration-500" />
+    <QrCode className="relative w-6 h-6 text-white" />
+  </div>
+  <span className="text-xl font-bold tracking-tighter uppercase">
+    NeonPulse<span className="text-cyan-400">QR</span>
+  </span>
+</div>
 
             <nav className="hidden md:flex items-center gap-10">
               <NavLink onClick={() => scrollToSection("features")}>
