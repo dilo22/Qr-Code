@@ -5,13 +5,22 @@ import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { CreateQrForm } from "@/components/dashboard/create-qr-form";
 
+type QRCodeRow = {
+  id: string;
+  user_id: string;
+  name: string | null;
+  type: string;
+  content: unknown;
+  design: unknown;
+};
+
 export default function EditQrPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
 
   const [loading, setLoading] = useState(true);
-  const [qr, setQr] = useState<any>(null);
+  const [qr, setQr] = useState<QRCodeRow | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -32,20 +41,26 @@ export default function EditQrPage() {
 
         if (!user) {
           setError("Utilisateur non connecté.");
+          setLoading(false);
           return;
         }
 
-        const { data, error } = await supabase
+        const { data, error: qrError } = await supabase
           .from("qr_codes")
           .select("*")
           .eq("id", id)
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
 
-        if (error) throw error;
+        if (qrError) throw qrError;
 
-        setQr(data);
+        if (!data) {
+          throw new Error("QR introuvable ou accès refusé.");
+        }
+
+        setQr(data as QRCodeRow);
       } catch (err: any) {
+        console.error("EDIT QR ERROR:", err);
         setError(err?.message || "Impossible de charger ce QR code.");
       } finally {
         setLoading(false);

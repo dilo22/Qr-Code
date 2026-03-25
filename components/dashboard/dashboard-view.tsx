@@ -207,10 +207,12 @@ export function DashboardView() {
 
         <Link
           href="/dashboard/create"
-          className="group flex items-center gap-3 rounded-2xl bg-white px-8 py-4 text-xs font-black uppercase tracking-widest text-black shadow-xl shadow-white/5 transition-all hover:scale-105 hover:bg-cyan-400"
+          className="group flex items-center gap-3 rounded-2xl bg-cyan-500 px-8 py-4 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-cyan-500/20 transition-all duration-300 hover:scale-105 hover:bg-white"
         >
-          <Plus size={16} strokeWidth={3} />
-          Nouveau Projet
+          <Plus className="text-white transition-colors group-hover:text-cyan-500" size={16} strokeWidth={3} />
+          <span className="transition-colors group-hover:text-cyan-500">
+            Nouveau Projet
+          </span>
         </Link>
       </div>
 

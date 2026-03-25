@@ -5,7 +5,11 @@ import QrDetailsView from "@/components/dashboard/qr-details-view";
 
 export default function QrDetailsPage() {
   const params = useParams();
-  const id = params?.id as string;
+  const qrId = params?.id as string;
 
-  return <QrDetailsView qrId={id} />;
+  if (!qrId) {
+    return <div className="p-8 text-red-300">ID du QR code manquant.</div>;
+  }
+
+  return <QrDetailsView qrId={qrId} />;
 }
