@@ -200,6 +200,17 @@ function normalizeDevice(device?: string | null): DeviceType {
   return "other";
 }
 
+function getDeviceLabel(device: DeviceType) {
+  const labels: Record<DeviceType, string> = {
+    mobile: "Mobile",
+    desktop: "Desktop",
+    tablet: "Tablet",
+    other: "Autre",
+  };
+
+  return labels[device];
+}
+
 function Badge({ status }: { status: string }) {
   const colors: Record<string, string> = {
     active: "bg-emerald-500/20 text-emerald-300 border-emerald-500/20",
@@ -230,7 +241,7 @@ function InfoCard({
   hint?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-[2rem] border border-white/8 bg-white/[0.04] p-5 backdrop-blur-xl">
+    <div className="rounded-[2rem] border border-white/5 bg-white/[0.03] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl">
       <div className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/35">
         {icon}
         {label}
@@ -240,18 +251,21 @@ function InfoCard({
     </div>
   );
 }
-
 function SectionCard({
   title,
   subtitle,
   children,
+  className = "",
 }: {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[2rem] border border-white/8 bg-white/[0.04] backdrop-blur-xl">
+    <div
+      className={`relative overflow-hidden rounded-[2rem] border border-white/5 bg-white/[0.03] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl ${className}`}
+    >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.08),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.10),transparent_30%)]" />
       <div className="relative p-6">
         <div className="mb-5">
@@ -265,7 +279,6 @@ function SectionCard({
     </div>
   );
 }
-
 function PreviewQR({ qr }: { qr: QRCodeItem }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -307,7 +320,10 @@ function PreviewQR({ qr }: { qr: QRCodeItem }) {
 
   return (
     <div className="flex items-center justify-center rounded-[2rem] border border-white/10 bg-white p-6 shadow-2xl">
-      <div ref={ref} className="flex min-h-[220px] min-w-[220px] items-center justify-center" />
+      <div
+        ref={ref}
+        className="flex min-h-[220px] min-w-[220px] max-w-full items-center justify-center"
+      />
     </div>
   );
 }
@@ -602,7 +618,7 @@ export default function QrDetailsView({ qrId }: Props) {
       if (dominantDevice && dominantDevice.percentage >= 60) {
         insights.push({
           tone: "neutral",
-          title: `${dominantDevice.percentage}% via ${dominantDevice.name}`,
+          title: `${dominantDevice.percentage}% via ${getDeviceLabel(dominantDevice.name)}`,
           description:
             "La majorité des scans provient du même type d’appareil. Optimise la destination pour ce support.",
         });
@@ -659,35 +675,40 @@ export default function QrDetailsView({ qrId }: Props) {
     <div className="relative animate-in space-y-8 fade-in duration-700">
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.08),transparent_22%),radial-gradient(circle_at_top_right,rgba(168,85,247,0.08),transparent_20%),radial-gradient(circle_at_bottom_center,rgba(59,130,246,0.06),transparent_25%)]" />
 
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-        <div className="space-y-3">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-white/50 transition hover:text-white"
-          >
-            <ArrowLeft size={16} />
-            Retour au dashboard
-          </Link>
+      <div className="flex w-full min-w-0 flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+  <div className="min-w-0 flex-1 space-y-3">
+    <Link
+      href="/dashboard"
+      className="inline-flex items-center gap-2 text-sm font-semibold text-white/50 transition hover:text-white"
+    >
+      <ArrowLeft size={16} />
+      Retour au dashboard
+    </Link>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-black italic uppercase tracking-tighter text-white">
-              {getDisplayName(qr)}
-            </h1>
-            <Badge status={getStatus(qr)} />
-          </div>
+    <div className="flex flex-wrap items-center gap-3">
+      <h1 className="break-words text-3xl font-black italic uppercase tracking-tighter text-white">
+        {getDisplayName(qr)}
+      </h1>
+      <Badge status={getStatus(qr)} />
+    </div>
 
-          <p className="max-w-2xl text-sm text-white/45">
-            Vue avancée du QR code, de son contenu, de ses scans et de ses tendances.
-          </p>
-        </div>
+    <p className="max-w-2xl break-words text-sm text-white/45">
+      Vue avancée du QR code, de son contenu, de ses scans et de ses tendances.
+    </p>
+  </div>
 
-        <div className="flex flex-wrap gap-3">
+  <div className="flex shrink-0 flex-wrap gap-3">
           <Link
             href={`/dashboard/qr/${qr.id}/edit`}
-            className="inline-flex items-center gap-2 rounded-2xl bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-black transition hover:scale-[1.02] hover:bg-cyan-400"
+            className="group inline-flex items-center gap-2 rounded-2xl bg-cyan-500 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-white shadow-lg shadow-cyan-500/25 transition-all duration-300 hover:scale-[1.02] hover:bg-white"
           >
-            <Pencil size={16} />
-            Modifier
+            <Pencil
+              size={16}
+              className="text-white transition-colors duration-300 group-hover:text-cyan-500"
+            />
+            <span className="transition-colors duration-300 group-hover:text-cyan-500">
+              Modifier
+            </span>
           </Link>
 
           <button
@@ -885,12 +906,16 @@ export default function QrDetailsView({ qrId }: Props) {
             )}
           </SectionCard>
 
-          <div className="grid gap-6 xl:grid-cols-2">
-            <SectionCard title="Devices" subtitle="Répartition des appareils détectés">
+          <div className="grid gap-6 2xl:grid-cols-2">
+            <SectionCard
+              title="Devices"
+              subtitle="Répartition des appareils détectés"
+              className="min-w-0"
+            >
               {analytics.deviceBreakdown.length === 0 ? (
                 <EmptyChartState text="Aucune donnée device disponible." />
               ) : (
-                <div className="grid min-w-0 items-center gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
+                <div className="grid min-w-0 gap-6 xl:grid-cols-1 3xl:grid-cols-[220px_minmax(0,1fr)]">
                   <div className="min-w-0">
                     <ResponsiveContainer width="100%" height={220}>
                       <PieChart>
@@ -907,6 +932,10 @@ export default function QrDetailsView({ qrId }: Props) {
                           ))}
                         </Pie>
                         <Tooltip
+                          formatter={(value: number, _name: string, props: any) => [
+                            `${value} scan${value > 1 ? "s" : ""}`,
+                            getDeviceLabel(props.payload.name),
+                          ]}
                           contentStyle={{
                             background: "rgba(10,10,20,0.95)",
                             border: "1px solid rgba(255,255,255,0.08)",
@@ -922,19 +951,23 @@ export default function QrDetailsView({ qrId }: Props) {
                     {analytics.deviceBreakdown.map((item, index) => (
                       <div
                         key={item.name}
-                        className="flex items-center justify-between rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3"
+                        className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3"
                       >
-                        <div className="flex items-center gap-3">
-                          <span
-                            className="h-2.5 w-2.5 rounded-full"
-                            style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
-                          />
-                          <div className="flex items-center gap-2 text-sm text-white/85">
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+                        />
+
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span className="shrink-0 text-white/85">
                             <DeviceIcon device={item.name} />
-                            <span className="capitalize">{item.name}</span>
-                          </div>
+                          </span>
+                          <span className="truncate text-sm font-medium text-white/85">
+                            {getDeviceLabel(item.name)}
+                          </span>
                         </div>
-                        <div className="text-right">
+
+                        <div className="shrink-0 text-right leading-tight">
                           <div className="text-sm font-semibold text-white">{item.value}</div>
                           <div className="text-xs text-white/45">{item.percentage}%</div>
                         </div>
@@ -956,19 +989,19 @@ export default function QrDetailsView({ qrId }: Props) {
                   {analytics.geoBreakdown.map((item, index) => (
                     <div
                       key={`${item.country}-${item.city}-${index}`}
-                      className="flex items-center justify-between rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3"
+                      className="flex items-center justify-between gap-4 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3"
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                          <Globe className="h-4 w-4 text-cyan-300" />
+                          <Globe className="h-4 w-4 shrink-0 text-cyan-300" />
                           <span className="truncate">{item.country}</span>
                         </div>
                         <div className="mt-1 flex items-center gap-2 text-xs text-white/45">
-                          <MapPin className="h-3.5 w-3.5" />
-                          {item.city || "Ville inconnue"}
+                          <MapPin className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{item.city || "Ville inconnue"}</span>
                         </div>
                       </div>
-                      <div className="text-sm font-semibold text-white">{item.count}</div>
+                      <div className="shrink-0 text-sm font-semibold text-white">{item.count}</div>
                     </div>
                   ))}
                 </div>
@@ -1002,9 +1035,9 @@ export default function QrDetailsView({ qrId }: Props) {
                         </div>
                       </div>
 
-                      <div className="text-right">
+                      <div className="shrink-0 text-right">
                         <div className="text-xs uppercase tracking-[0.16em] text-white/35">
-                          {device}
+                          {getDeviceLabel(device)}
                         </div>
                         <div className="mt-1 text-xs font-semibold text-white/55">
                           {formatDate(scan.scanned_at)}

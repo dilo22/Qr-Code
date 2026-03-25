@@ -51,7 +51,9 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[2rem] border border-white/8 bg-white/[0.04] backdrop-blur-xl">
+    <div
+  className={`relative overflow-hidden rounded-[2rem] border border-white/5 bg-white/[0.03] shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-xl ${className}`}
+>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.08),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(168,85,247,0.10),transparent_30%)]" />
       <div className="relative p-6">
         <div className="mb-5">
