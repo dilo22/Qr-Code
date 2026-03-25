@@ -1,445 +1,534 @@
 "use client";
 
-import Link from "next/link";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import {
+  QrCode,
+  ArrowUpRight,
+  FileText,
+  Wifi,
+  Contact,
+  Type,
+  Mail,
+  Zap,
+  BarChart3,
+  Palette,
+  Download,
+  ChevronRight,
+  Globe,
+} from "lucide-react";
+
+// --- Composants de base ---
+
+const GlassCard = ({
+  children,
+  className = "",
+  onClick,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}) => (
+  <div
+    onClick={onClick}
+    className={`relative group transition-all duration-500 hover:scale-[1.02] cursor-pointer ${className}`}
+  >
+    <div className="absolute -inset-[1px] bg-gradient-to-br from-white/20 via-transparent to-white/5 rounded-[2rem] z-0" />
+    <div className="absolute inset-0 bg-white/[0.03] backdrop-blur-2xl rounded-[2rem] z-0" />
+    <div className="relative z-10 p-8 h-full">{children}</div>
+  </div>
+);
+
+const NavLink = ({
+  children,
+  onClick,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+}) => (
+  <button
+    onClick={onClick}
+    className="relative text-sm font-medium text-white/60 hover:text-white transition-colors group py-2"
+  >
+    {children}
+    <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-gradient-to-r from-cyan-400 to-fuchsia-500 transition-all duration-300 group-hover:w-full" />
+  </button>
+);
+
+// --- Données ---
 
 const qrTypes = [
   {
-    title: "Lien / URL",
-    desc: "Transformez un site web, une landing page ou un produit en QR code scannable instantanément.",
-    icon: "↗",
+    title: "Smart URL",
+    desc: "Landing pages et produits connectés.",
+    icon: <ArrowUpRight className="w-6 h-6" />,
+    color: "from-cyan-400 to-blue-500",
   },
   {
-    title: "PDF",
-    desc: "Partagez brochures, menus, catalogues, CV, notices et documents en un scan.",
-    icon: "▣",
+    title: "Dynamic PDF",
+    desc: "Menus, brochures et catalogues interactifs.",
+    icon: <FileText className="w-6 h-6" />,
+    color: "from-fuchsia-400 to-purple-600",
   },
   {
-    title: "Wi-Fi",
-    desc: "Connectez vos invités à votre réseau sans saisir de mot de passe.",
-    icon: "◉",
+    title: "Auto-Connect Wi-Fi",
+    desc: "Accès instantané sans saisie manuelle.",
+    icon: <Wifi className="w-6 h-6" />,
+    color: "from-emerald-400 to-teal-500",
   },
   {
-    title: "vCard",
-    desc: "Diffusez vos coordonnées professionnelles avec une carte de visite intelligente.",
-    icon: "⌘",
+    title: "NextGen vCard",
+    desc: "Identité numérique et réseaux sociaux.",
+    icon: <Contact className="w-6 h-6" />,
+    color: "from-orange-400 to-red-500",
   },
   {
-    title: "Texte",
-    desc: "Encodez messages, codes promo, instructions ou informations rapides.",
-    icon: "✦",
+    title: "Encrypted Text",
+    desc: "Messages sécurisés et codes promotionnels.",
+    icon: <Type className="w-6 h-6" />,
+    color: "from-blue-400 to-indigo-600",
   },
   {
-    title: "Email / SMS",
-    desc: "Lancez directement un email ou un message prérempli depuis le scan.",
-    icon: "✉",
+    title: "Interactive Mail",
+    desc: "Flux de contact pré-remplis en un scan.",
+    icon: <Mail className="w-6 h-6" />,
+    color: "from-pink-400 to-rose-500",
   },
 ];
 
 const steps = [
   {
-    number: "01",
-    title: "Choisir le type",
-    desc: "Sélectionnez le format parfait : lien, PDF, Wi-Fi, contact, texte, email et plus encore.",
+    id: "01",
+    title: "Structure",
+    desc: "Définissez l'ADN de votre contenu.",
+    icon: <Zap />,
   },
   {
-    number: "02",
-    title: "Insérer les informations",
-    desc: "Ajoutez vos données en quelques secondes avec une expérience simple et fluide.",
+    id: "02",
+    title: "Injection",
+    desc: "Payload de données ultra-rapide.",
+    icon: <Globe />,
   },
   {
-    number: "03",
-    title: "Personnaliser le design",
-    desc: "Couleurs, coins, motifs, logo, style premium : créez un QR code qui reflète votre marque.",
+    id: "03",
+    title: "Morphing",
+    desc: "Stylisation visuelle adaptative.",
+    icon: <Palette />,
   },
   {
-    number: "04",
-    title: "Télécharger",
-    desc: "Exportez vos QR codes en haute qualité pour l’impression ou le digital.",
+    id: "04",
+    title: "Export",
+    desc: "Rendu vectoriel haute fidélité.",
+    icon: <Download />,
   },
   {
-    number: "05",
-    title: "Analyse & mise à jour",
-    desc: "Suivez les performances, optimisez les scans et mettez à jour les contenus dynamiques.",
+    id: "05",
+    title: "Intelligence",
+    desc: "Suivi analytique en temps réel.",
+    icon: <BarChart3 />,
   },
-];
-
-const features = [
-  "QR codes dynamiques",
-  "Design ultra personnalisable",
-  "Statistiques de scans",
-  "Mise à jour sans réimpression",
-  "Compatible print & digital",
-  "Expérience rapide et moderne",
 ];
 
 export default function HomePage() {
+  const router = useRouter();
+
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [scrolled, setScrolled] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+
+    const handleMove = (e: MouseEvent) =>
+      setMousePos({ x: e.clientX, y: e.clientY });
+
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  const navigateToAuth = () => {
+    router.push("/auth");
+  };
+
+  const scrollToSection = (id: string) => {
+    const section = document.getElementById(id);
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
-      {/* Background */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[-10%] top-[-10%] h-[28rem] w-[28rem] rounded-full bg-fuchsia-500/20 blur-3xl animate-floatSlow" />
-        <div className="absolute right-[-8%] top-[10%] h-[24rem] w-[24rem] rounded-full bg-cyan-400/20 blur-3xl animate-floatMedium" />
-        <div className="absolute bottom-[-15%] left-[20%] h-[30rem] w-[30rem] rounded-full bg-violet-600/20 blur-3xl animate-floatSlow" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.07),transparent_30%),linear-gradient(to_bottom,rgba(255,255,255,0.03),transparent_20%),linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:auto,auto,42px_42px,42px_42px]" />
+    <div className="min-h-screen bg-[#02040a] text-white font-sans selection:bg-cyan-500/30 overflow-x-hidden">
+      {/* Fond Dynamique */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div
+          className="absolute w-[800px] h-[800px] rounded-full bg-cyan-500/10 blur-[120px] transition-transform duration-1000 ease-out"
+          style={{
+            transform: `translate(${mousePos.x / 10 - 400}px, ${
+              mousePos.y / 10 - 400
+            }px)`,
+          }}
+        />
+        <div
+          className="absolute right-0 w-[600px] h-[600px] rounded-full bg-purple-600/10 blur-[120px] transition-transform duration-1000 ease-out delay-75"
+          style={{
+            transform: `translate(${-mousePos.x / 15}px, ${
+              -mousePos.y / 15
+            }px)`,
+          }}
+        />
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
       </div>
 
-      {/* Navbar */}
-      <header className="relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6 md:px-10">
-        <div className="flex items-center gap-4">
-          <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/10 shadow-[0_0_35px_rgba(125,211,252,0.25)] backdrop-blur-xl">
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-400/30 via-fuchsia-500/20 to-violet-500/30" />
-            <div className="relative grid grid-cols-3 gap-[3px]">
-              <span className="h-2.5 w-2.5 rounded-sm bg-white" />
-              <span className="h-2.5 w-2.5 rounded-sm bg-cyan-300" />
-              <span className="h-2.5 w-2.5 rounded-sm bg-white" />
-              <span className="h-2.5 w-2.5 rounded-sm bg-fuchsia-300" />
-              <span className="h-2.5 w-2.5 rounded-sm bg-white" />
-              <span className="h-2.5 w-2.5 rounded-sm bg-cyan-300" />
-              <span className="h-2.5 w-2.5 rounded-sm bg-white" />
-              <span className="h-2.5 w-2.5 rounded-sm bg-violet-300" />
-              <span className="h-2.5 w-2.5 rounded-sm bg-white" />
-            </div>
-          </div>
-
-          <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-cyan-300/80">
-              Smart QR Experience
-            </p>
-            <h1 className="text-xl font-black tracking-tight md:text-2xl">
-              NeonPulse QR
-            </h1>
-          </div>
-        </div>
-
-        <nav className="hidden items-center gap-8 md:flex">
-          <a href="#types" className="text-sm text-white/70 transition hover:text-white">
-            Types de QR
-          </a>
-          <a href="#etapes" className="text-sm text-white/70 transition hover:text-white">
-            Étapes
-          </a>
-          <a href="#benefices" className="text-sm text-white/70 transition hover:text-white">
-            Avantages
-          </a>
-        </nav>
-
-        <Link
-          href="/signup"
-          className="rounded-full border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur-xl transition hover:scale-[1.03] hover:bg-white/15"
+      <>
+        {/* Header */}
+        <header
+          className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+            scrolled ? "py-4" : "py-8"
+          }`}
         >
-          S’inscrire
-        </Link>
-      </header>
-
-      {/* Hero */}
-      <section className="relative z-10 mx-auto grid min-h-[88vh] w-full max-w-7xl items-center gap-12 px-6 pb-16 pt-8 md:grid-cols-2 md:px-10 md:pb-24 md:pt-12">
-        <div className="max-w-2xl">
-          <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-cyan-300/20 bg-white/8 px-4 py-2 backdrop-blur-xl">
-            <span className="h-2 w-2 rounded-full bg-cyan-300 animate-pulse" />
-            <span className="text-sm text-white/80">
-              Créez des QR codes puissants, élégants et mémorables
-            </span>
-          </div>
-
-          <h2 className="text-5xl font-black leading-[0.95] tracking-tight sm:text-6xl md:text-7xl">
-            Donnez une
-            <span className="block bg-gradient-to-r from-cyan-300 via-white to-fuchsia-300 bg-clip-text text-transparent">
-              nouvelle dimension
-            </span>
-            à vos QR codes
-          </h2>
-
-          <p className="mt-6 max-w-xl text-base leading-8 text-white/72 md:text-lg">
-            Créez des QR codes pour des liens, PDF, accès Wi-Fi, cartes de visite,
-            menus, promotions et bien plus. Personnalisez le design, suivez les
-            scans, mettez à jour vos contenus et offrez une expérience premium à
-            vos utilisateurs.
-          </p>
-
-          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-            <Link
-              href="/signup"
-              className="group relative inline-flex items-center justify-center overflow-hidden rounded-full px-7 py-4 text-sm font-bold text-[#07111f] transition hover:scale-[1.03]"
+          <div
+            className={`mx-auto max-w-7xl px-6 flex items-center justify-between transition-all duration-300 ${
+              scrolled
+                ? "bg-white/5 backdrop-blur-md rounded-full border border-white/10 px-8"
+                : ""
+            }`}
+          >
+            <div
+              className="flex items-center gap-3 group cursor-pointer"
+              onClick={scrollToTop}
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-cyan-300 via-white to-fuchsia-300" />
-              <span className="absolute inset-0 opacity-0 transition group-hover:opacity-100 blur-xl bg-gradient-to-r from-cyan-300 via-white to-fuchsia-300" />
-              <span className="relative">Commencer gratuitement</span>
-            </Link>
+              <div className="relative w-10 h-10 flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-tr from-cyan-400 to-fuchsia-500 rounded-lg rotate-12 group-hover:rotate-45 transition-transform duration-500" />
+                <QrCode className="relative w-6 h-6 text-white" />
+              </div>
+              <span className="text-xl font-bold tracking-tighter uppercase">
+                AETHER<span className="text-cyan-400">QR</span>
+              </span>
+            </div>
 
-            <a
-              href="#etapes"
-              className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/8 px-7 py-4 text-sm font-semibold text-white backdrop-blur-xl transition hover:bg-white/12"
+            <nav className="hidden md:flex items-center gap-10">
+              <NavLink onClick={() => scrollToSection("features")}>
+                Technologie
+              </NavLink>
+              <NavLink onClick={() => scrollToSection("workflow")}>
+                Processus
+              </NavLink>
+              <NavLink onClick={() => scrollToSection("analytics")}>
+                Analytics
+              </NavLink>
+            </nav>
+
+            <button
+              onClick={navigateToAuth}
+              className="relative group px-6 py-2.5 overflow-hidden rounded-full bg-white text-black font-bold transition-all hover:pr-10"
             >
-              Voir le fonctionnement
-            </a>
+              <span className="relative z-10">Get Started</span>
+              <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all w-4 h-4" />
+            </button>
           </div>
+        </header>
 
-          <div className="mt-10 grid max-w-xl grid-cols-2 gap-4 sm:grid-cols-3">
-            {["Rapide", "Élégant", "Dynamique", "Analytics", "Branding", "Premium"].map(
-              (item) => (
-                <div
-                  key={item}
-                  className="rounded-2xl border border-white/10 bg-white/6 px-4 py-4 text-center text-sm font-medium text-white/85 backdrop-blur-xl transition hover:-translate-y-1 hover:bg-white/10"
-                >
-                  {item}
+        <main className="relative z-10 animate-fade-in">
+          {/* Hero Section */}
+          <section className="pt-44 pb-20 px-6">
+            <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+              <div className="space-y-8">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm">
+                  <span className="flex h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
+                  <span className="text-xs font-medium uppercase tracking-widest text-cyan-400 font-black italic">
+                    V3.0 Live
+                  </span>
                 </div>
-              )
-            )}
-          </div>
-        </div>
 
-        {/* Visual */}
-        <div className="relative mx-auto flex w-full max-w-xl items-center justify-center">
-          <div className="absolute h-[26rem] w-[26rem] rounded-full bg-cyan-400/20 blur-3xl" />
-          <div className="absolute h-[20rem] w-[20rem] rounded-full border border-white/10" />
-          <div className="absolute h-[28rem] w-[28rem] rounded-full border border-fuchsia-300/10 animate-spinSlow" />
+                <h1 className="text-7xl md:text-8xl font-black leading-[0.9] tracking-tighter uppercase italic">
+                  L'identité <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-white to-fuchsia-400">
+                    Augmentée
+                  </span>
+                </h1>
 
-          <div className="relative rounded-[2rem] border border-white/12 bg-white/8 p-5 shadow-[0_0_80px_rgba(255,255,255,0.06)] backdrop-blur-2xl">
-            <div className="rounded-[1.6rem] border border-white/12 bg-[#0b132b]/80 p-6">
-              <div className="mb-5 flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-cyan-300/70">
-                    Aperçu
-                  </p>
-                  <h3 className="mt-1 text-lg font-bold">QR Code Designer</h3>
-                </div>
-                <div className="rounded-full border border-white/10 bg-white/6 px-3 py-1 text-xs text-white/70">
-                  Live
+                <p className="text-lg text-white/50 max-w-lg leading-relaxed italic">
+                  Transformez chaque interaction physique en une expérience
+                  numérique immersive. Suivez et personnalisez votre image de
+                  marque.
+                </p>
+
+                <div className="flex flex-wrap gap-4 pt-4">
+                  <button
+                    onClick={navigateToAuth}
+                    className="px-8 py-5 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs uppercase shadow-[0_20px_50px_rgba(34,211,238,0.2)] transition-all active:scale-95"
+                  >
+                    Générer mon QR
+                  </button>
+                  <button
+                    onClick={() => scrollToSection("features")}
+                    className="px-8 py-5 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/10 backdrop-blur-md font-black text-xs uppercase transition-all"
+                  >
+                    Démo Interactive
+                  </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-[1fr_auto] gap-5">
-                <div className="space-y-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/6 p-4">
-                    <p className="text-xs text-white/55">Type</p>
-                    <p className="mt-1 font-semibold">Lien / URL</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/6 p-4">
-                    <p className="text-xs text-white/55">Destination</p>
-                    <p className="mt-1 truncate font-semibold text-cyan-300">
-                      https://neonpulse-qr.app
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/6 p-4">
-                    <p className="text-xs text-white/55">Style</p>
-                    <p className="mt-1 font-semibold">Gradient Pulse</p>
-                  </div>
-                </div>
+              {/* Hero Visual */}
+              <div className="relative group">
+                <div className="absolute -inset-20 bg-cyan-500/20 rounded-full blur-[100px] animate-pulse" />
+                <div
+                  className="relative mx-auto w-full max-w-[480px] aspect-square rounded-[3rem] border border-white/10 bg-white/5 backdrop-blur-3xl p-8 shadow-2xl overflow-hidden cursor-pointer hover:border-cyan-500/30 transition-colors"
+                  onClick={navigateToAuth}
+                >
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent animate-scan" />
 
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-[1.8rem] bg-gradient-to-br from-cyan-300/30 via-fuchsia-300/20 to-violet-400/30 blur-xl" />
-                  <div className="relative rounded-[1.8rem] border border-white/15 bg-white p-5 shadow-2xl animate-floatFast">
-                    <div className="grid grid-cols-7 gap-[4px]">
-                      {Array.from({ length: 49 }).map((_, i) => {
-                        const active =
-                          [
-                            0, 1, 2, 5, 6,
-                            7, 9, 11, 12, 13,
-                            14, 16, 18, 20,
-                            21, 22, 23, 25, 27,
-                            28, 30, 31, 33, 34,
-                            35, 37, 39, 41,
-                            42, 43, 44, 47, 48,
-                          ].includes(i);
+                  <div className="h-full flex flex-col justify-between">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-2xl font-black italic uppercase">
+                          Aether-X
+                        </h3>
+                        <p className="text-[10px] text-white/40 uppercase tracking-tighter font-black">
+                          Dynamic Neural QR
+                        </p>
+                      </div>
+                      <div className="px-3 py-1 rounded-md bg-cyan-500/20 text-cyan-400 text-[10px] font-black italic">
+                        READY
+                      </div>
+                    </div>
+
+                    {/* QR Grid */}
+                    <div className="grid grid-cols-10 gap-1.5 opacity-80">
+                      {Array.from({ length: 100 }).map((_, i) => {
+                        const isCorner =
+                          (i < 3 && i % 10 < 3) ||
+                          (i < 3 && i % 10 > 6) ||
+                          (i > 69 && i % 10 < 3);
+
+                        const isActive = isMounted
+                          ? Math.random() > 0.6
+                          : i % 7 === 0;
 
                         return (
-                          <span
+                          <div
                             key={i}
-                            className={`h-4 w-4 rounded-[3px] ${
-                              active ? "bg-[#0b1020]" : "bg-[#dbeafe]"
+                            className={`aspect-square rounded-[2px] transition-all duration-700 ${
+                              isCorner
+                                ? "bg-white"
+                                : isActive
+                                ? "bg-cyan-400 animate-pulse"
+                                : "bg-white/10"
                             }`}
                           />
                         );
                       })}
                     </div>
-                    <div className="mt-4 rounded-xl bg-[#0b1020] px-3 py-2 text-center text-xs font-semibold text-white">
-                      Scan me
+
+                    <div className="bg-white/10 rounded-2xl p-4 border border-white/10 flex items-center justify-between">
+                      <div className="space-y-1">
+                        <p className="text-[8px] text-white/40 font-black uppercase">
+                          Analytics Live
+                        </p>
+                        <p className="text-xs font-black italic tracking-widest uppercase">
+                          1,429 Scans / H
+                        </p>
+                      </div>
+                      <div className="flex -space-x-2">
+                        {[1, 2, 3].map((i) => (
+                          <div
+                            key={i}
+                            className="w-6 h-6 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 border border-white/20"
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
+          </section>
 
-              <div className="mt-5 grid grid-cols-3 gap-3">
-                {[
-                  ["Scans", "12.4k"],
-                  ["Taux d’action", "68%"],
-                  ["Mises à jour", "Live"],
-                ].map(([label, value]) => (
+          {/* Features */}
+          <section id="features" className="py-24 px-6 max-w-7xl mx-auto">
+            <div className="mb-16 text-center space-y-4">
+              <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter">
+                Modes de Fusion
+              </h2>
+              <p className="text-white/40 max-w-xl mx-auto italic text-sm">
+                Le canal parfait pour vos données.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {qrTypes.map((type, i) => (
+                <GlassCard key={i} onClick={navigateToAuth}>
                   <div
-                    key={label}
-                    className="rounded-2xl border border-white/10 bg-white/6 p-4 text-center"
+                    className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${type.color} flex items-center justify-center mb-6 shadow-lg transform group-hover:-rotate-12 transition-transform`}
                   >
-                    <p className="text-xs text-white/50">{label}</p>
-                    <p className="mt-1 text-lg font-black">{value}</p>
+                    {type.icon}
+                  </div>
+                  <h3 className="text-xl font-black italic uppercase mb-3 tracking-tighter">
+                    {type.title}
+                  </h3>
+                  <p className="text-white/50 text-xs leading-relaxed mb-6 italic">
+                    {type.desc}
+                  </p>
+                  <div className="w-full h-[1px] bg-white/10 mb-6" />
+                  <button className="text-[10px] font-black uppercase tracking-widest text-cyan-400 flex items-center gap-2 group/btn">
+                    Explorer
+                    <ArrowUpRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
+                  </button>
+                </GlassCard>
+              ))}
+            </div>
+          </section>
+
+          {/* Workflow */}
+          <section id="workflow" className="py-24 bg-white/[0.02]">
+            <div className="max-w-7xl mx-auto px-6">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-20">
+                <div className="space-y-4">
+                  <span className="text-cyan-400 font-black tracking-[0.3em] uppercase text-[10px]">
+                    Architecture
+                  </span>
+                  <h2 className="text-5xl font-black uppercase italic tracking-tighter">
+                    Du concept à la réalité.
+                  </h2>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                {steps.map((step, i) => (
+                  <div
+                    key={i}
+                    className="relative group cursor-pointer"
+                    onClick={navigateToAuth}
+                  >
+                    <div className="text-7xl font-black text-white/[0.03] absolute -top-8 -left-4 select-none group-hover:text-cyan-400/10 transition-colors italic">
+                      {step.id}
+                    </div>
+                    <div className="relative z-10 p-6 space-y-4">
+                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-cyan-400 group-hover:bg-cyan-400 group-hover:text-black transition-colors duration-500">
+                        {step.icon}
+                      </div>
+                      <h4 className="text-sm font-black uppercase italic">
+                        {step.title}
+                      </h4>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </section>
 
-      {/* QR Types */}
-      <section
-        id="types"
-        className="relative z-10 mx-auto w-full max-w-7xl px-6 py-10 md:px-10 md:py-20"
-      >
-        <div className="mb-12 max-w-2xl">
-          <p className="text-sm uppercase tracking-[0.35em] text-cyan-300/75">
-            Types de QR codes
-          </p>
-          <h3 className="mt-4 text-3xl font-black tracking-tight md:text-5xl">
-            Créez un QR pour chaque usage
-          </h3>
-          <p className="mt-4 text-white/68 leading-8">
-            Que vous soyez créateur, entreprise, restaurant, événementiel ou e-commerce,
-            vous pouvez générer des QR codes adaptés à chaque besoin.
-          </p>
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {qrTypes.map((item) => (
-            <div
-              key={item.title}
-              className="group relative overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/6 p-6 backdrop-blur-2xl transition duration-300 hover:-translate-y-2 hover:bg-white/10"
-            >
-              <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-cyan-300/10 blur-2xl transition group-hover:bg-fuchsia-300/15" />
-              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-2xl">
-                {item.icon}
-              </div>
-              <h4 className="text-xl font-bold">{item.title}</h4>
-              <p className="mt-3 leading-7 text-white/68">{item.desc}</p>
+          {/* Analytics */}
+          <section id="analytics" className="py-24 px-6 max-w-7xl mx-auto">
+            <div className="text-center space-y-4 mb-16">
+              <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter">
+                Analytics Temps Réel
+              </h2>
+              <p className="text-white/40 max-w-2xl mx-auto italic text-sm">
+                Mesurez les scans, optimisez vos campagnes et transformez vos QR
+                codes en canal de croissance.
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* Steps */}
-      <section
-        id="etapes"
-        className="relative z-10 mx-auto w-full max-w-7xl px-6 py-10 md:px-10 md:py-20"
-      >
-        <div className="mb-12 max-w-2xl">
-          <p className="text-sm uppercase tracking-[0.35em] text-fuchsia-300/80">
-            Workflow
-          </p>
-          <h3 className="mt-4 text-3xl font-black tracking-tight md:text-5xl">
-            Un parcours simple, intelligent et puissant
-          </h3>
-          <p className="mt-4 text-white/68 leading-8">
-            L’objectif n’est pas seulement de générer un QR code, mais de créer une
-            vraie expérience de diffusion, d’identité visuelle et de performance.
-          </p>
-        </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              <GlassCard>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-3">
+                  Scans du jour
+                </p>
+                <h3 className="text-4xl font-black italic">1,429</h3>
+                <p className="text-cyan-400 text-xs mt-3">+18% vs hier</p>
+              </GlassCard>
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-5">
-          {steps.map((step) => (
-            <div
-              key={step.number}
-              className="relative rounded-[1.75rem] border border-white/10 bg-white/6 p-6 backdrop-blur-2xl transition hover:-translate-y-2 hover:bg-white/10"
-            >
-              <div className="mb-4 text-4xl font-black text-white/15">{step.number}</div>
-              <h4 className="text-xl font-bold">{step.title}</h4>
-              <p className="mt-3 text-sm leading-7 text-white/68">{step.desc}</p>
+              <GlassCard>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-3">
+                  Taux d’engagement
+                </p>
+                <h3 className="text-4xl font-black italic">64%</h3>
+                <p className="text-fuchsia-400 text-xs mt-3">
+                  Sur vos QR dynamiques
+                </p>
+              </GlassCard>
+
+              <GlassCard>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-3">
+                  Profils actifs
+                </p>
+                <h3 className="text-4xl font-black italic">312</h3>
+                <p className="text-emerald-400 text-xs mt-3">
+                  Campagnes en cours
+                </p>
+              </GlassCard>
             </div>
-          ))}
-        </div>
-      </section>
+          </section>
 
-      {/* Benefits */}
-      <section
-        id="benefices"
-        className="relative z-10 mx-auto w-full max-w-7xl px-6 py-10 md:px-10 md:py-20"
-      >
-        <div className="grid gap-8 md:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-[2rem] border border-white/10 bg-white/6 p-8 backdrop-blur-2xl">
-            <p className="text-sm uppercase tracking-[0.35em] text-cyan-300/75">
-              Pourquoi NeonPulse QR
-            </p>
-            <h3 className="mt-4 text-3xl font-black tracking-tight md:text-5xl">
-              Plus qu’un générateur :
-              <span className="block bg-gradient-to-r from-white via-cyan-200 to-fuchsia-200 bg-clip-text text-transparent">
-                une plateforme de présence intelligente
-              </span>
-            </h3>
-            <p className="mt-5 max-w-2xl leading-8 text-white/68">
-              Votre QR code devient un point d’entrée vers votre univers de marque :
-              plus élégant, plus mesurable, plus flexible, plus efficace.
-            </p>
-
-            <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              {features.map((feature) => (
-                <div
-                  key={feature}
-                  className="rounded-2xl border border-white/10 bg-[#0d1631]/60 px-4 py-4 text-white/85"
-                >
-                  ✦ {feature}
+          {/* CTA */}
+          <section className="py-32 px-6">
+            <div className="max-w-5xl mx-auto relative rounded-[4rem] bg-gradient-to-br from-cyan-600 to-fuchsia-700 p-1 shadow-2xl transition-transform hover:scale-[1.01] duration-700">
+              <div className="bg-[#02040a] rounded-[3.9rem] p-12 md:p-24 text-center space-y-10 relative overflow-hidden">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-cyan-500/20 blur-[100px] rounded-full" />
+                <h2 className="text-4xl md:text-6xl font-black leading-tight relative z-10 uppercase italic">
+                  Prêt à numériser <br /> votre monde ?
+                </h2>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-6 relative z-10">
+                  <button
+                    onClick={navigateToAuth}
+                    className="px-12 py-5 rounded-full bg-white text-black font-black uppercase text-xs hover:scale-105 transition-transform"
+                  >
+                    Créer mon compte
+                  </button>
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
+          </section>
 
-          <div className="grid gap-5">
-            <div className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-cyan-300/15 via-white/5 to-fuchsia-400/15 p-8 backdrop-blur-2xl">
-              <p className="text-sm text-white/60">Création</p>
-              <p className="mt-2 text-4xl font-black">Instantanée</p>
-              <p className="mt-3 leading-7 text-white/70">
-                Générez un QR code en quelques secondes avec un rendu premium.
-              </p>
+          <footer className="py-12 border-t border-white/5 bg-[#02040a]">
+            <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+              <span className="text-[10px] font-black tracking-widest opacity-30 uppercase">
+                © 2026 Aether Core Inc.
+              </span>
+              <div className="flex gap-8 text-[10px] font-black text-white/20 uppercase tracking-widest">
+                <a href="#" className="hover:text-cyan-400 transition-colors">
+                  Privacy
+                </a>
+                <a href="#" className="hover:text-cyan-400 transition-colors">
+                  Terms
+                </a>
+              </div>
             </div>
+          </footer>
+        </main>
+      </>
 
-            <div className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-violet-400/15 via-white/5 to-cyan-300/15 p-8 backdrop-blur-2xl">
-              <p className="text-sm text-white/60">Design</p>
-              <p className="mt-2 text-4xl font-black">100% personnalisable</p>
-              <p className="mt-3 leading-7 text-white/70">
-                Adaptez chaque QR code à votre branding avec style et impact.
-              </p>
-            </div>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @keyframes scan { 
+          0% { top: 0; opacity: 0; } 
+          20% { opacity: 1; } 
+          80% { opacity: 1; } 
+          100% { top: 100%; opacity: 0; } 
+        }
+        .animate-scan { animation: scan 4s linear infinite; }
 
-            <div className="rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/10 via-fuchsia-300/10 to-cyan-300/10 p-8 backdrop-blur-2xl">
-              <p className="text-sm text-white/60">Performance</p>
-              <p className="mt-2 text-4xl font-black">Scalable</p>
-              <p className="mt-3 leading-7 text-white/70">
-                Idéal pour campagnes marketing, menus, événements, packaging et cartes de visite.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-20 pt-10 md:px-10 md:pb-28">
-        <div className="relative overflow-hidden rounded-[2.2rem] border border-white/10 bg-white/8 px-8 py-12 text-center backdrop-blur-2xl md:px-14 md:py-16">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(103,232,249,0.18),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(232,121,249,0.16),transparent_25%)]" />
-          <div className="relative">
-            <p className="text-sm uppercase tracking-[0.35em] text-cyan-300/80">
-              Ready to launch
-            </p>
-            <h3 className="mx-auto mt-4 max-w-3xl text-3xl font-black tracking-tight md:text-5xl">
-              Impressionnez dès la première seconde avec des QR codes qui captent l’attention
-            </h3>
-            <p className="mx-auto mt-5 max-w-2xl leading-8 text-white/70">
-              Lancez votre plateforme, créez une expérience moderne et donnez à vos utilisateurs
-              une raison de revenir.
-            </p>
-
-            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link
-                href="/signup"
-                className="rounded-full bg-white px-7 py-4 text-sm font-bold text-[#09111f] transition hover:scale-[1.03]"
-              >
-                Créer mon compte
-              </Link>
-              <a
-                href="#types"
-                className="rounded-full border border-white/15 bg-white/8 px-7 py-4 text-sm font-semibold text-white transition hover:bg-white/12"
-              >
-                Explorer les possibilités
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
+        @keyframes fade-in { 
+          from { opacity: 0; transform: translateY(10px); } 
+          to { opacity: 1; transform: translateY(0); } 
+        }
+        .animate-fade-in { animation: fade-in 0.8s ease-out forwards; }
+      `,
+        }}
+      />
+    </div>
   );
 }

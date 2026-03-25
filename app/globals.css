@@ -87,3 +87,98 @@ a {
 .animate-spinSlow {
   animation: spinSlow 18s linear infinite;
 }
+
+
+.field-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+}
+
+.qr-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.qr-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  outline: none;
+}
+
+.qr-input:focus,
+.qr-input:focus-visible {
+  outline: none;
+  border-color: rgba(56, 189, 248, 0.75);
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.12);
+}
+.qr-input:-webkit-autofill,
+.qr-input:-webkit-autofill:hover,
+.qr-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.98);
+  -webkit-box-shadow: 0 0 0px 1000px rgba(6, 7, 20, 1) inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+
+select.qr-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  min-width: 0;
+  padding-right: 48px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.96);
+  background:
+    linear-gradient(180deg, rgba(3, 4, 14, 0.96), rgba(6, 7, 20, 0.98));
+  background-image:
+    linear-gradient(180deg, rgba(3, 4, 14, 0.96), rgba(6, 7, 20, 0.98)),
+    linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.72) 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72) 50%, transparent 50%);
+  background-position:
+    0 0,
+    calc(100% - 22px) calc(50% - 3px),
+    calc(100% - 16px) calc(50% - 3px);
+  background-size:
+    100% 100%,
+    6px 6px,
+    6px 6px;
+  background-repeat: no-repeat;
+}
+
+select.qr-input:hover {
+  border-color: rgba(120, 180, 255, 0.28);
+  background-image:
+    linear-gradient(180deg, rgba(4, 5, 16, 0.98), rgba(8, 9, 24, 1)),
+    linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.82) 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.82) 50%, transparent 50%);
+}
+
+select.qr-input:focus,
+select.qr-input:focus-visible {
+  outline: none;
+  border-color: rgba(56, 189, 248, 0.75);
+  box-shadow:
+    0 0 0 4px rgba(34, 211, 238, 0.12),
+    0 10px 26px rgba(8, 145, 178, 0.1);
+}
+
+select.qr-input option {
+  background-color: #0b1020;
+  color: #ffffff;
+}
+
+
+.qr-preview-container svg, 
+  .qr-preview-container canvas {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    height: auto !important;
+    width: auto !important;
+  }
