@@ -118,11 +118,8 @@ function isTrackableType(type: QrTypeId) {
 }
 
 function buildTrackingUrl(id: string) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-
-  if (!appUrl) {
-    throw new Error("NEXT_PUBLIC_APP_URL manquante.");
-  }
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
 
   return `${appUrl.replace(/\/$/, "")}/s/${id}`;
 }
