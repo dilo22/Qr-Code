@@ -9,8 +9,32 @@ import type { QrDesignData } from "@/components/dashboard/create-qr-design";
 import { buildQrValue } from "./qr-utils";
 import { supabase } from "@/lib/supabase/client";
 
-import {Link as LinkIcon,Wifi,FileText,UserSquare2, Mail,MessageSquare,Phone,Instagram,Facebook,Video,Linkedin,Twitter,Youtube,
-  File,Image as ImageIcon,Music2,MapPin,CalendarDays,CreditCard,Smartphone,Star,UtensilsCrossed,Layers,Palette,Share2,
+import {
+  Link as LinkIcon,
+  Wifi,
+  FileText,
+  UserSquare2,
+  Mail,
+  MessageSquare,
+  Phone,
+  Instagram,
+  Facebook,
+  Video,
+  Linkedin,
+  Twitter,
+  Youtube,
+  File,
+  Image as ImageIcon,
+  Music2,
+  MapPin,
+  CalendarDays,
+  CreditCard,
+  Smartphone,
+  Star,
+  UtensilsCrossed,
+  Layers,
+  Palette,
+  Share2,
 } from "lucide-react";
 
 const QR_TYPES = [
@@ -62,6 +86,7 @@ const STEP_ORDER: StepId[] = ["type", "content", "design", "export"];
 
 function getMainInfo(type: string, data: Record<string, any>) {
   if (!data || Object.keys(data).length === 0) return "En attente de contenu...";
+
   switch (type) {
     case "url":
       return data.url || "Aucun lien";
@@ -72,6 +97,49 @@ function getMainInfo(type: string, data: Record<string, any>) {
     default:
       return data.url || data.text || data.phone || data.email || "Contenu renseigné";
   }
+}
+
+function isTrackableType(type: QrTypeId) {
+  return [
+    "url",
+    "instagram",
+    "facebook",
+    "tiktok",
+    "linkedin",
+    "twitter",
+    "youtube",
+    "pdf",
+    "image",
+    "audio",
+    "app",
+    "menu",
+    "review",
+  ].includes(type);
+}
+
+function buildTrackingUrl(id: string) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+  if (!appUrl) {
+    throw new Error("NEXT_PUBLIC_APP_URL manquante.");
+  }
+
+  return `${appUrl.replace(/\/$/, "")}/s/${id}`;
+}
+
+function parseStoredContent(content: unknown): Record<string, any> {
+  if (!content) return {};
+  if (typeof content === "object") return content as Record<string, any>;
+
+  if (typeof content === "string") {
+    try {
+      return JSON.parse(content);
+    } catch {
+      return {};
+    }
+  }
+
+  return {};
 }
 
 export function CreateQrForm({
@@ -88,7 +156,7 @@ export function CreateQrForm({
   const [furthestStep, setFurthestStep] = useState<StepId>(mode === "edit" ? "export" : "type");
   const [qrData, setQrData] = useState<Record<string, any>>({
     name: initialName,
-    ...initialQrData,
+    ...parseStoredContent(initialQrData),
   });
   const [qrDesign, setQrDesign] = useState<Partial<QrDesignData>>({
     foreground: "#000000",
@@ -106,7 +174,13 @@ export function CreateQrForm({
     return QR_TYPES.find((t) => t.id === selectedType) || QR_TYPES[0];
   }, [selectedType]);
 
-  const qrValue = useMemo(() => buildQrValue(selectedType, qrData), [selectedType, qrData]);
+  const qrValue = useMemo(() => {
+    if (savedQrId && isTrackableType(selectedType)) {
+      return buildTrackingUrl(savedQrId);
+    }
+
+    return buildQrValue(selectedType, qrData);
+  }, [savedQrId, selectedType, qrData]);
 
   const isStepAccessible = (targetStep: StepId) => {
     return STEP_ORDER.indexOf(targetStep) <= STEP_ORDER.indexOf(furthestStep);
@@ -140,40 +214,51 @@ export function CreateQrForm({
       if (userError) throw userError;
       if (!user) throw new Error("Utilisateur non connecté.");
 
-      const finalQrValue = buildQrValue(nextType, nextData);
+      const rawQrValue = buildQrValue(nextType, nextData);
       const mainLabel = nextData.name || getMainInfo(nextType, nextData);
 
-      const payload = {
-        user_id: user.id,
-        type: nextType,
-        name: mainLabel,
-        title: mainLabel,
-        content: nextData,
-        design: nextDesign,
-        qr_value: finalQrValue,
-      };
+      let finalId = savedQrId || qrId || null;
+      let finalQrValue = rawQrValue;
 
-      let finalId = savedQrId || qrId;
-
-      if (savedQrId) {
-        const { error } = await supabase
-          .from("qr_codes")
-          .update(payload)
-          .eq("id", savedQrId)
-          .eq("user_id", user.id);
-
-        if (error) throw error;
-      } else {
+      if (!finalId) {
         const { data, error } = await supabase
           .from("qr_codes")
-          .insert(payload)
+          .insert({
+            user_id: user.id,
+            type: nextType,
+            name: mainLabel,
+            title: mainLabel,
+            content: JSON.stringify(nextData),
+            design: nextDesign,
+            qr_value: rawQrValue,
+          })
           .select("id")
           .single();
 
         if (error) throw error;
-        setSavedQrId(data.id);
+
         finalId = data.id;
+        setSavedQrId(finalId);
       }
+
+      if (isTrackableType(nextType)) {
+        finalQrValue = buildTrackingUrl(finalId);
+      }
+
+      const { error: updateError } = await supabase
+        .from("qr_codes")
+        .update({
+          type: nextType,
+          name: mainLabel,
+          title: mainLabel,
+          content: JSON.stringify(nextData),
+          design: nextDesign,
+          qr_value: finalQrValue,
+        })
+        .eq("id", finalId)
+        .eq("user_id", user.id);
+
+      if (updateError) throw updateError;
 
       unlockStep("export");
       setStep("export");

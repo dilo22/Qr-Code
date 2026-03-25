@@ -41,6 +41,22 @@ type QRScanItem = {
   scanned_at: string;
 };
 
+function parseContent(content: unknown) {
+  if (!content) return null;
+
+  if (typeof content === "object") return content;
+
+  if (typeof content === "string") {
+    try {
+      return JSON.parse(content);
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
 function getDisplayName(qr: QRCodeItem) {
   return qr.name || qr.title || "Sans titre";
 }
@@ -51,8 +67,12 @@ function getStatus(qr: QRCodeItem) {
 
 function getPreviewValue(qr: QRCodeItem) {
   if (qr.qr_value) return qr.qr_value;
-  if (qr.content?.url) return qr.content.url;
-  if (qr.content?.text) return qr.content.text;
+
+  const parsedContent = parseContent(qr.content);
+
+  if (parsedContent?.url) return parsedContent.url;
+  if (parsedContent?.text) return parsedContent.text;
+
   return qr.id;
 }
 
@@ -136,7 +156,7 @@ function PreviewQR({ qr }: { qr: QRCodeItem }) {
       dotsStyle: "square",
       cornersStyle: "square",
       errorCorrectionLevel: "M",
-      logoUrl: "",
+      logoUrl: null,
       logoSize: 0.4,
       ...(qr.design || {}),
     };
@@ -165,12 +185,14 @@ function PreviewQR({ qr }: { qr: QRCodeItem }) {
   );
 }
 
-function renderContentDetails(content: any) {
-  if (!content || typeof content !== "object") {
+function renderContentDetails(content: unknown) {
+  const parsedContent = parseContent(content);
+
+  if (!parsedContent || typeof parsedContent !== "object") {
     return <p className="text-sm text-white/45">Aucune donnée de contenu.</p>;
   }
 
-  const entries = Object.entries(content).filter(
+  const entries = Object.entries(parsedContent).filter(
     ([, value]) => value !== null && value !== undefined && value !== ""
   );
 
