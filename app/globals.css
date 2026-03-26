@@ -182,3 +182,43 @@ select.qr-input option {
     height: auto !important;
     width: auto !important;
   }
+
+
+  @keyframes scan-horizontal {
+  0% { transform: translateX(-100%); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+.animate-scan-horizontal {
+  animation: scan-horizontal 4.2s linear infinite;
+}
+
+@keyframes step-progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+.animate-step-progress {
+  animation-name: step-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+
+@keyframes chart-glow {
+  0% {
+    filter: drop-shadow(0 0 0px rgba(34,211,238,0));
+  }
+  50% {
+    filter: drop-shadow(0 0 10px rgba(34,211,238,0.45));
+  }
+  100% {
+    filter: drop-shadow(0 0 0px rgba(34,211,238,0));
+  }
+}
+
+.animate-chart-glow {
+  animation: chart-glow 1.2s ease-in-out;
+}

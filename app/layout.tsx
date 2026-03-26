@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NeonPulse QR",
+  title: "MyQR",
   description: "Créez des QR codes magnifiques, dynamiques et intelligents.",
 };
 

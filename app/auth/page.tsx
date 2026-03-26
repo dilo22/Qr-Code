@@ -132,7 +132,7 @@ export default function AuthPage() {
                 <QrCode className="w-6 h-6 text-white" />
               </div>
               <span className="text-xl font-bold tracking-tighter uppercase">
-                Aether<span className="text-cyan-400">QR</span>
+                My<span className="text-cyan-400">QR</span>
               </span>
             </div>
 
@@ -190,7 +190,7 @@ export default function AuthPage() {
             </h3>
             <p className="text-white/40 text-sm">
               {mode === "login"
-                ? "Ravis de vous revoir dans l'Aether."
+                ? "Ravis de vous revoir dans MyQR."
                 : "Commencez votre voyage numérique aujourd'hui."}
             </p>
           </div>
@@ -248,7 +248,7 @@ export default function AuthPage() {
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                 <input
                   type="email"
-                  placeholder="name@aether.ai"
+                  placeholder="name@myqr.ai"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 outline-none focus:border-cyan-500/50 focus:bg-white/[0.08] transition-all"
@@ -310,7 +310,7 @@ export default function AuthPage() {
               onClick={switchMode}
               className="ml-2 font-black text-white hover:text-cyan-400 transition-colors underline decoration-cyan-500/30 underline-offset-4"
             >
-              {mode === "login" ? "Rejoindre l'Aether" : "Se connecter"}
+              {mode === "login" ? "Rejoindre MyQR" : "Se connecter"}
             </button>
           </p>
         </div>
