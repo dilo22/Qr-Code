@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "app/HomePage.jsx"  ],
+, "app/HomePage.jsx", "../qr-details-view.tsx"  ],
   "exclude": ["node_modules"]
 }

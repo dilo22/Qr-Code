@@ -49,43 +49,42 @@ type Props = {
 
 function getTypeMeta(type: string) {
   const metas: Record<string, any> = {
-    url: { icon: <LinkIcon size={24} />, title: "Lien web", description: "Redirigez vers une URL." },
-    wifi: { icon: <Wifi size={24} />, title: "Wi-Fi", description: "Connexion rapide à un réseau." },
-    text: { icon: <FileText size={24} />, title: "Texte", description: "Affichez un texte simple après scan." },
-    vcard: { icon: <UserSquare2 size={24} />, title: "Carte de visite", description: "Partagez vos coordonnées complètes." },
-    email: { icon: <Mail size={24} />, title: "Email", description: "Préparez un email avec objet et message." },
-    sms: { icon: <MessageSquare size={24} />, title: "SMS", description: "Envoyez un message à un numéro." },
-    phone: { icon: <Phone size={24} />, title: "Téléphone", description: "Lancez un appel directement." },
-    instagram: { icon: <Instagram size={24} />, title: "Instagram", description: "Lien vers votre profil Instagram." },
-    facebook: { icon: <Facebook size={24} />, title: "Facebook", description: "Lien vers votre page Facebook." },
-    tiktok: { icon: <Video size={24} />, title: "TikTok", description: "Lien vers votre profil TikTok." },
-    linkedin: { icon: <Linkedin size={24} />, title: "LinkedIn", description: "Lien vers votre profil LinkedIn." },
-    twitter: { icon: <Twitter size={24} />, title: "X / Twitter", description: "Lien vers votre profil X." },
-    youtube: { icon: <Youtube size={24} />, title: "YouTube", description: "Lien vers votre chaîne ou vidéo." },
-    pdf: { icon: <File size={24} />, title: "PDF", description: "Lien vers un document PDF." },
-    image: { icon: <ImageIcon size={24} />, title: "Image", description: "Lien vers une image." },
-    audio: { icon: <Music2 size={24} />, title: "Audio", description: "Lien vers un audio." },
-    location: { icon: <MapPin size={24} />, title: "Localisation", description: "Adresse ou coordonnées GPS." },
-    event: { icon: <CalendarDays size={24} />, title: "Événement", description: "Créez un QR pour un événement." },
-    payment: { icon: <CreditCard size={24} />, title: "Paiement", description: "Préparez un paiement simple." },
-    app: { icon: <Smartphone size={24} />, title: "Application", description: "Lien vers une application ou un store." },
-    menu: { icon: <UtensilsCrossed size={24} />, title: "Menu", description: "Partagez votre menu en ligne." },
-    review: { icon: <Star size={24} />, title: "Avis", description: "Lien vers votre page d’avis." },
+    url: { icon: <LinkIcon size={22} />, title: "Lien web", description: "Redirigez vers une URL." },
+    wifi: { icon: <Wifi size={22} />, title: "Wi-Fi", description: "Connexion rapide à un réseau." },
+    text: { icon: <FileText size={22} />, title: "Texte", description: "Affichez un texte simple après scan." },
+    vcard: { icon: <UserSquare2 size={22} />, title: "Carte de visite", description: "Partagez vos coordonnées complètes." },
+    email: { icon: <Mail size={22} />, title: "Email", description: "Préparez un email avec objet et message." },
+    sms: { icon: <MessageSquare size={22} />, title: "SMS", description: "Envoyez un message à un numéro." },
+    phone: { icon: <Phone size={22} />, title: "Téléphone", description: "Lancez un appel directement." },
+    instagram: { icon: <Instagram size={22} />, title: "Instagram", description: "Lien vers votre profil Instagram." },
+    facebook: { icon: <Facebook size={22} />, title: "Facebook", description: "Lien vers votre page Facebook." },
+    tiktok: { icon: <Video size={22} />, title: "TikTok", description: "Lien vers votre profil TikTok." },
+    linkedin: { icon: <Linkedin size={22} />, title: "LinkedIn", description: "Lien vers votre profil LinkedIn." },
+    twitter: { icon: <Twitter size={22} />, title: "X / Twitter", description: "Lien vers votre profil X." },
+    youtube: { icon: <Youtube size={22} />, title: "YouTube", description: "Lien vers votre chaîne ou vidéo." },
+    pdf: { icon: <File size={22} />, title: "PDF", description: "Lien vers un document PDF." },
+    image: { icon: <ImageIcon size={22} />, title: "Image", description: "Lien vers une image." },
+    audio: { icon: <Music2 size={22} />, title: "Audio", description: "Lien vers un audio." },
+    location: { icon: <MapPin size={22} />, title: "Localisation", description: "Adresse ou coordonnées GPS." },
+    event: { icon: <CalendarDays size={22} />, title: "Événement", description: "Créez un QR pour un événement." },
+    payment: { icon: <CreditCard size={22} />, title: "Paiement", description: "Préparez un paiement simple." },
+    app: { icon: <Smartphone size={22} />, title: "Application", description: "Lien vers une application ou un store." },
+    menu: { icon: <UtensilsCrossed size={22} />, title: "Menu", description: "Partagez votre menu en ligne." },
+    review: { icon: <Star size={22} />, title: "Avis", description: "Lien vers votre page d’avis." },
   };
 
   return metas[type] || {
-    icon: <FileText size={24} />,
+    icon: <FileText size={22} />,
     title: "Contenu",
     description: "Configurez votre QR code.",
   };
 }
 
 const inputClass =
-  "w-full rounded-2xl border border-white/10 bg-white/[0.05] px-5 py-4 text-base text-white outline-none transition-all placeholder:text-white/25 focus:border-cyan-400/70 focus:bg-white/[0.08] focus:ring-4 focus:ring-cyan-400/10";
-const textareaClass =
-  `${inputClass} min-h-[150px] resize-y leading-7`;
-const nativeInputClass =
-  `${inputClass} appearance-none`;
+  "w-full rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none transition-all placeholder:text-white/25 focus:border-cyan-400/70 focus:bg-white/[0.08] focus:ring-4 focus:ring-cyan-400/10";
+
+const textareaClass = `${inputClass} min-h-[120px] resize-y leading-6`;
+const nativeInputClass = `${inputClass} appearance-none`;
 
 export default function CreateQrContent({
   type,
@@ -109,7 +108,7 @@ export default function CreateQrContent({
     placeholder = "https://neonpulseqr.vercel.app/",
     field = "url"
   ) => (
-    <Field label={label} icon={<Globe size={15} />}>
+    <Field label={label} icon={<Globe size={14} />}>
       <input
         type="text"
         placeholder={placeholder}
@@ -124,8 +123,8 @@ export default function CreateQrContent({
     switch (type) {
       case "wifi":
         return (
-          <div className="space-y-6">
-            <Field label="Nom du réseau (SSID)" icon={<Wifi size={15} />}>
+          <div className="space-y-5">
+            <Field label="Nom du réseau (SSID)" icon={<Wifi size={14} />}>
               <input
                 type="text"
                 placeholder="Ex: MaBox_Guest"
@@ -135,8 +134,8 @@ export default function CreateQrContent({
               />
             </Field>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Field label="Mot de passe" icon={<Lock size={15} />}>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <Field label="Mot de passe" icon={<Lock size={14} />}>
                 <input
                   type="password"
                   placeholder="••••••••"
@@ -146,7 +145,7 @@ export default function CreateQrContent({
                 />
               </Field>
 
-              <Field label="Sécurité" icon={<ShieldCheck size={15} />}>
+              <Field label="Sécurité" icon={<ShieldCheck size={14} />}>
                 <div className="relative">
                   <select
                     value={form.encryption || "WPA"}
@@ -157,7 +156,7 @@ export default function CreateQrContent({
                     <option value="WEP">WEP</option>
                     <option value="nopass">Ouvert</option>
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/40" size={18} />
+                  <ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/40" size={16} />
                 </div>
               </Field>
             </div>
@@ -166,9 +165,9 @@ export default function CreateQrContent({
 
       case "text":
         return (
-          <Field label="Texte à afficher" icon={<Type size={15} />}>
+          <Field label="Texte à afficher" icon={<Type size={14} />}>
             <textarea
-              rows={8}
+              rows={7}
               placeholder="Écrivez votre texte ici..."
               value={form.text || ""}
               onChange={(e) => handleChange("text", e.target.value)}
@@ -179,9 +178,9 @@ export default function CreateQrContent({
 
       case "vcard":
         return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Field label="Prénom" icon={<User size={15} />}>
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <Field label="Prénom" icon={<User size={14} />}>
                 <input
                   type="text"
                   placeholder="John"
@@ -191,7 +190,7 @@ export default function CreateQrContent({
                 />
               </Field>
 
-              <Field label="Nom" icon={<UserSquare2 size={15} />}>
+              <Field label="Nom" icon={<UserSquare2 size={14} />}>
                 <input
                   type="text"
                   placeholder="Doe"
@@ -202,8 +201,8 @@ export default function CreateQrContent({
               </Field>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Field label="Téléphone" icon={<Phone size={15} />}>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <Field label="Téléphone" icon={<Phone size={14} />}>
                 <input
                   type="text"
                   placeholder="+33 6 12 34 56 78"
@@ -213,7 +212,7 @@ export default function CreateQrContent({
                 />
               </Field>
 
-              <Field label="Email" icon={<Mail size={15} />}>
+              <Field label="Email" icon={<Mail size={14} />}>
                 <input
                   type="email"
                   placeholder="contact@entreprise.com"
@@ -224,8 +223,8 @@ export default function CreateQrContent({
               </Field>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Field label="Entreprise" icon={<Building2 size={15} />}>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <Field label="Entreprise" icon={<Building2 size={14} />}>
                 <input
                   type="text"
                   placeholder="Nom de l’entreprise"
@@ -235,7 +234,7 @@ export default function CreateQrContent({
                 />
               </Field>
 
-              <Field label="Poste" icon={<Briefcase size={15} />}>
+              <Field label="Poste" icon={<Briefcase size={14} />}>
                 <input
                   type="text"
                   placeholder="Fonction"
@@ -246,8 +245,8 @@ export default function CreateQrContent({
               </Field>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Field label="Adresse" icon={<MapPinned size={15} />}>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <Field label="Adresse" icon={<MapPinned size={14} />}>
                 <input
                   type="text"
                   placeholder="Adresse complète"
@@ -257,7 +256,7 @@ export default function CreateQrContent({
                 />
               </Field>
 
-              <Field label="Site web" icon={<Globe size={15} />}>
+              <Field label="Site web" icon={<Globe size={14} />}>
                 <input
                   type="text"
                   placeholder="https://monsite.com"
@@ -272,8 +271,8 @@ export default function CreateQrContent({
 
       case "email":
         return (
-          <div className="space-y-6">
-            <Field label="Destinataire" icon={<Mail size={15} />}>
+          <div className="space-y-5">
+            <Field label="Destinataire" icon={<Mail size={14} />}>
               <input
                 type="email"
                 placeholder="contact@pro.com"
@@ -283,7 +282,7 @@ export default function CreateQrContent({
               />
             </Field>
 
-            <Field label="Objet" icon={<FileText size={15} />}>
+            <Field label="Objet" icon={<FileText size={14} />}>
               <input
                 type="text"
                 placeholder="Demande d'information"
@@ -293,9 +292,9 @@ export default function CreateQrContent({
               />
             </Field>
 
-            <Field label="Message" icon={<MessageSquare size={15} />}>
+            <Field label="Message" icon={<MessageSquare size={14} />}>
               <textarea
-                rows={7}
+                rows={6}
                 placeholder="Bonjour..."
                 value={form.body || ""}
                 onChange={(e) => handleChange("body", e.target.value)}
@@ -307,8 +306,8 @@ export default function CreateQrContent({
 
       case "sms":
         return (
-          <div className="space-y-6">
-            <Field label="Numéro" icon={<Phone size={15} />}>
+          <div className="space-y-5">
+            <Field label="Numéro" icon={<Phone size={14} />}>
               <input
                 type="text"
                 placeholder="+33 6 12 34 56 78"
@@ -318,9 +317,9 @@ export default function CreateQrContent({
               />
             </Field>
 
-            <Field label="Message" icon={<MessageSquare size={15} />}>
+            <Field label="Message" icon={<MessageSquare size={14} />}>
               <textarea
-                rows={7}
+                rows={6}
                 placeholder="Votre message..."
                 value={form.message || ""}
                 onChange={(e) => handleChange("message", e.target.value)}
@@ -332,7 +331,7 @@ export default function CreateQrContent({
 
       case "phone":
         return (
-          <Field label="Numéro de téléphone" icon={<Phone size={15} />}>
+          <Field label="Numéro de téléphone" icon={<Phone size={14} />}>
             <input
               type="text"
               placeholder="+33 6 12 34 56 78"
@@ -345,8 +344,8 @@ export default function CreateQrContent({
 
       case "location":
         return (
-          <div className="space-y-6">
-            <Field label="Adresse ou lieu" icon={<MapPin size={15} />}>
+          <div className="space-y-5">
+            <Field label="Adresse ou lieu" icon={<MapPin size={14} />}>
               <input
                 type="text"
                 placeholder="10 rue de Paris, Lyon"
@@ -356,8 +355,8 @@ export default function CreateQrContent({
               />
             </Field>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Field label="Latitude" icon={<MapPinned size={15} />}>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <Field label="Latitude" icon={<MapPinned size={14} />}>
                 <input
                   type="text"
                   placeholder="48.8566"
@@ -367,7 +366,7 @@ export default function CreateQrContent({
                 />
               </Field>
 
-              <Field label="Longitude" icon={<MapPinned size={15} />}>
+              <Field label="Longitude" icon={<MapPinned size={14} />}>
                 <input
                   type="text"
                   placeholder="2.3522"
@@ -382,8 +381,8 @@ export default function CreateQrContent({
 
       case "event":
         return (
-          <div className="space-y-6">
-            <Field label="Titre de l’événement" icon={<CalendarDays size={15} />}>
+          <div className="space-y-5">
+            <Field label="Titre de l’événement" icon={<CalendarDays size={14} />}>
               <input
                 type="text"
                 placeholder="Conférence annuelle"
@@ -393,8 +392,8 @@ export default function CreateQrContent({
               />
             </Field>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Field label="Date de début" icon={<CalendarDays size={15} />}>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <Field label="Date de début" icon={<CalendarDays size={14} />}>
                 <input
                   type="date"
                   value={form.startDate || ""}
@@ -403,7 +402,7 @@ export default function CreateQrContent({
                 />
               </Field>
 
-              <Field label="Heure de début" icon={<Clock3 size={15} />}>
+              <Field label="Heure de début" icon={<Clock3 size={14} />}>
                 <input
                   type="time"
                   value={form.startTime || ""}
@@ -413,7 +412,7 @@ export default function CreateQrContent({
               </Field>
             </div>
 
-            <Field label="Lieu" icon={<MapPin size={15} />}>
+            <Field label="Lieu" icon={<MapPin size={14} />}>
               <input
                 type="text"
                 placeholder="Salle / Adresse"
@@ -427,8 +426,8 @@ export default function CreateQrContent({
 
       case "payment":
         return (
-          <div className="space-y-6">
-            <Field label="Nom du bénéficiaire" icon={<User size={15} />}>
+          <div className="space-y-5">
+            <Field label="Nom du bénéficiaire" icon={<User size={14} />}>
               <input
                 type="text"
                 placeholder="Nom ou entreprise"
@@ -438,8 +437,8 @@ export default function CreateQrContent({
               />
             </Field>
 
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Field label="Montant" icon={<Wallet size={15} />}>
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <Field label="Montant" icon={<Wallet size={14} />}>
                 <input
                   type="text"
                   placeholder="49.99"
@@ -449,7 +448,7 @@ export default function CreateQrContent({
                 />
               </Field>
 
-              <Field label="Devise" icon={<Hash size={15} />}>
+              <Field label="Devise" icon={<Hash size={14} />}>
                 <input
                   type="text"
                   placeholder="EUR"
@@ -483,28 +482,28 @@ export default function CreateQrContent({
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-7">
-      <div className="rounded-[34px] border border-white/10 bg-[linear-gradient(180deg,#070914_0%,#05060f_100%)] p-6 shadow-[0_10px_40px_rgba(0,0,0,0.28)] md:p-10">
-        <div className="mb-8 flex items-start gap-5 md:mb-10">
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[20px] border border-white/10 bg-white/[0.04] text-white md:h-[68px] md:w-[68px]">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 xl:max-w-[920px]">
+      <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,#070914_0%,#05060f_100%)] p-5 shadow-[0_10px_32px_rgba(0,0,0,0.24)] md:p-7">
+        <div className="mb-6 flex items-start gap-4 md:mb-8">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] border border-white/10 bg-white/[0.04] text-white md:h-16 md:w-16">
             {meta.icon}
           </div>
 
           <div>
-            <span className="mb-3 inline-block rounded-full bg-cyan-400/10 px-3 py-1 text-[10px] font-black tracking-[0.18em] text-cyan-400">
+            <span className="mb-2 inline-block rounded-full bg-cyan-400/10 px-2.5 py-1 text-[9px] font-black tracking-[0.16em] text-cyan-400">
               QR CONTENT
             </span>
-            <h1 className="text-3xl font-black leading-none text-white md:text-5xl">
+            <h1 className="text-2xl font-black leading-none text-white md:text-4xl">
               {meta.title}
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/45 md:text-[15px]">
+            <p className="mt-2 max-w-xl text-xs leading-5 text-white/45 md:text-sm">
               {meta.description}
             </p>
           </div>
         </div>
 
-        <div className="space-y-8">
-          <Field label="Nom du projet" icon={<FileText size={15} />}>
+        <div className="space-y-6">
+          <Field label="Nom du projet" icon={<FileText size={14} />}>
             <input
               type="text"
               placeholder="Ex: Menu restaurant, WiFi bureau..."
@@ -523,16 +522,16 @@ export default function CreateQrContent({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           onClick={onBack}
-          className="rounded-2xl border border-white/10 bg-transparent px-7 py-3.5 font-bold text-white transition hover:bg-white/5"
+          className="rounded-xl border border-white/10 bg-transparent px-6 py-3 text-sm font-bold text-white transition hover:bg-white/5"
         >
           ← Retour
         </button>
 
         <button
           onClick={() => onNext(form)}
-          className="flex items-center justify-center gap-3 rounded-2xl bg-white px-8 py-3.5 font-black text-black transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(255,255,255,0.14)]"
+          className="flex items-center justify-center gap-2.5 rounded-xl bg-white px-7 py-3 text-sm font-black text-black transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(255,255,255,0.14)]"
         >
-          Continuer <ArrowRight size={18} />
+          Continuer <ArrowRight size={16} />
         </button>
       </div>
     </div>
@@ -550,7 +549,7 @@ function Field({
 }) {
   return (
     <div className="w-full">
-      <label className="mb-3 flex items-center gap-2.5 pl-1 text-[12px] font-black uppercase tracking-[0.12em] text-white/45">
+      <label className="mb-2 flex items-center gap-2 pl-1 text-[11px] font-black uppercase tracking-[0.1em] text-white/45">
         {icon && <span className="flex shrink-0 items-center justify-center text-cyan-400">{icon}</span>}
         {label}
       </label>

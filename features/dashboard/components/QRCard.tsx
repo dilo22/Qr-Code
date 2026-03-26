@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, Clock, BarChart3, Settings, Trash2 } from "lucide-react";
+import { Eye, Clock, BarChart3, Pencil, Trash2, Info } from "lucide-react";
 import type { QRCodeItem } from "@/features/dashboard/types/dashboard.types";
 import {
   getProjectDisplayName,
@@ -43,22 +43,44 @@ function Badge({
   );
 }
 
+function ModeBadge({ mode }: { mode: "dynamic" | "static" }) {
+  return (
+    <span
+      className={`rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter ${
+        mode === "dynamic"
+          ? "bg-emerald-500/15 text-emerald-300"
+          : "bg-white/10 text-white/50"
+      }`}
+    >
+      {mode === "dynamic" ? "dynamique" : "statique"}
+    </span>
+  );
+}
+
 function IconButton({
   icon,
   danger = false,
+  label,
 }: {
   icon: React.ReactNode;
   danger?: boolean;
+  label: string;
 }) {
   return (
-    <div
-      className={`flex items-center justify-center rounded-xl p-3 transition-all duration-300 ${
-        danger
-          ? "text-red-400 hover:bg-red-500/10 hover:text-red-300"
-          : "text-white/40 hover:bg-white/5 hover:text-white"
-      }`}
-    >
-      {icon}
+    <div className="group relative">
+      <div
+        className={`flex items-center justify-center rounded-xl p-3 transition-all duration-300 ${
+          danger
+            ? "text-red-400 hover:bg-red-500/10 hover:text-red-300"
+            : "text-white/40 hover:bg-white/5 hover:text-white"
+        }`}
+      >
+        {icon}
+      </div>
+
+      <div className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-[10px] font-bold uppercase text-white opacity-0 transition-all group-hover:opacity-100">
+        {label}
+      </div>
     </div>
   );
 }
@@ -74,6 +96,12 @@ export default function QRCard({
 
   const status = getProjectStatus(project);
   const projectName = getProjectDisplayName(project);
+  const qrMode: "dynamic" | "static" =
+    project.qr_mode === "static" ? "static" : "dynamic";
+
+  const primaryActionLabel = qrMode === "dynamic" ? "Analyses" : "Infos";
+  const primaryActionTitle =
+    qrMode === "dynamic" ? "Voir les analyses" : "Voir les informations";
 
   return (
     <div
@@ -96,6 +124,7 @@ export default function QRCard({
             {projectName}
           </h4>
           <Badge status={status}>{status}</Badge>
+          <ModeBadge mode={qrMode} />
         </div>
 
         <div className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/25">
@@ -105,29 +134,44 @@ export default function QRCard({
         <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-tight text-white/40">
           <span className="flex items-center gap-1.5 rounded-lg bg-white/5 px-2 py-1">
             <Eye className="h-3 w-3 text-cyan-400" />
-            {scansCount} Scans
+            {qrMode === "dynamic" ? `${scansCount} Scans` : "Sans tracking"}
           </span>
 
           <span className="flex items-center gap-1.5 rounded-lg bg-white/5 px-2 py-1">
             <Clock className="h-3 w-3 text-purple-400" />
-            {formatLastScan(lastScan)}
+            {qrMode === "dynamic"
+              ? formatLastScan(lastScan)
+              : "Retéléchargeable"}
           </span>
         </div>
       </div>
 
-      <div className="flex translate-x-2 gap-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100">
+      <div className="flex translate-x-2 gap-6 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100">
         <Link
           href={`/dashboard/qr/${project.id}`}
           onClick={(e) => e.stopPropagation()}
         >
-          <IconButton icon={<BarChart3 size={18} />} />
+          <div title={primaryActionTitle}>
+            <IconButton
+              icon={
+                qrMode === "dynamic" ? (
+                  <BarChart3 size={18} />
+                ) : (
+                  <Info size={18} />
+                )
+              }
+              label={primaryActionLabel}
+            />
+          </div>
         </Link>
 
         <Link
           href={`/dashboard/qr/${project.id}/edit`}
           onClick={(e) => e.stopPropagation()}
         >
-          <IconButton icon={<Settings size={18} />} />
+          <div title="Modifier">
+            <IconButton icon={<Pencil size={18} />} label="Modifier" />
+          </div>
         </Link>
 
         <button
@@ -138,15 +182,13 @@ export default function QRCard({
             onDelete(project.id, projectName);
           }}
         >
-          <IconButton
-            danger
-            icon={
-              <Trash2
-                size={18}
-                className={isDeleting ? "animate-pulse" : ""}
-              />
-            }
-          />
+          <div title="Supprimer">
+            <IconButton
+              danger
+              icon={<Trash2 size={18} className={isDeleting ? "animate-pulse" : ""} />}
+              label="Supprimer"
+            />
+          </div>
         </button>
       </div>
     </div>

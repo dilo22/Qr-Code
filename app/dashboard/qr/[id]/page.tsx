@@ -1,15 +1,17 @@
-"use client";
+import QRDetailsView from "@/features/dashboard/components/qr-details/QRDetailsView";
 
-import { useParams } from "next/navigation";
-import QrDetailsView from "@/features/dashboard/components/qr-details-view";
+type Props = {
+  params: Promise<{
+    id: string;
+  }>;
+};
 
-export default function QrDetailsPage() {
-  const params = useParams();
-  const qrId = params?.id as string;
+export default async function QrDetailsPage({ params }: Props) {
+  const { id } = await params;
 
-  if (!qrId) {
+  if (!id) {
     return <div className="p-8 text-red-300">ID du QR code manquant.</div>;
   }
 
-  return <QrDetailsView qrId={qrId} />;
+  return <QRDetailsView qrId={id} />;
 }

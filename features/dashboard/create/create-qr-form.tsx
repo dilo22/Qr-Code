@@ -71,6 +71,7 @@ const STEPS = [
 
 type StepId = (typeof STEPS)[number]["id"];
 type QrTypeId = (typeof QR_TYPES)[number]["id"];
+type QrModeFilter = "all" | "dynamic" | "static";
 
 type CreateQrFormProps = {
   mode?: "create" | "edit";
@@ -117,6 +118,10 @@ function isTrackableType(type: QrTypeId) {
   ].includes(type);
 }
 
+function getQrMode(type: QrTypeId): "dynamic" | "static" {
+  return isTrackableType(type) ? "dynamic" : "static";
+}
+
 function buildTrackingUrl(id: string) {
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
@@ -150,6 +155,7 @@ export function CreateQrForm({
   onSaved,
 }: CreateQrFormProps) {
   const [selectedType, setSelectedType] = useState<QrTypeId>(initialType);
+  const [typeFilter, setTypeFilter] = useState<QrModeFilter>("all");
   const [step, setStep] = useState<StepId>(mode === "edit" ? "content" : "type");
   const [furthestStep, setFurthestStep] = useState<StepId>(mode === "edit" ? "export" : "type");
   const [qrData, setQrData] = useState<Record<string, any>>({
@@ -171,6 +177,17 @@ export function CreateQrForm({
   const activeType = useMemo(() => {
     return QR_TYPES.find((t) => t.id === selectedType) || QR_TYPES[0];
   }, [selectedType]);
+
+  const filteredQrTypes = useMemo(() => {
+    if (typeFilter === "all") return QR_TYPES;
+
+    return QR_TYPES.filter((type) => {
+      const mode = getQrMode(type.id);
+      return mode === typeFilter;
+    });
+  }, [typeFilter]);
+
+  const selectedTypeMode = useMemo(() => getQrMode(selectedType), [selectedType]);
 
   const qrValue = useMemo(() => {
     if (savedQrId && isTrackableType(selectedType)) {
@@ -214,6 +231,7 @@ export function CreateQrForm({
 
       const rawQrValue = buildQrValue(nextType, nextData);
       const mainLabel = nextData.name || getMainInfo(nextType, nextData);
+      const qrMode = getQrMode(nextType);
 
       let finalId = savedQrId || qrId || null;
       let finalQrValue = rawQrValue;
@@ -224,6 +242,7 @@ export function CreateQrForm({
           .insert({
             user_id: user.id,
             type: nextType,
+            qr_mode: qrMode,
             name: mainLabel,
             title: mainLabel,
             content: JSON.stringify(nextData),
@@ -248,6 +267,7 @@ export function CreateQrForm({
         .from("qr_codes")
         .update({
           type: nextType,
+          qr_mode: qrMode,
           name: mainLabel,
           title: mainLabel,
           content: JSON.stringify(nextData),
@@ -267,13 +287,25 @@ export function CreateQrForm({
       return finalId;
     } catch (error: any) {
       console.error("SAVE QR ERROR:", error);
-      setSaveError(error?.message || JSON.stringify(error) || "Erreur lors de la sauvegarde.");
+      console.error("SAVE QR ERROR message:", error?.message);
+      console.error("SAVE QR ERROR details:", error?.details);
+      console.error("SAVE QR ERROR hint:", error?.hint);
+      console.error("SAVE QR ERROR code:", error?.code);
+
+      setSaveError(
+        error?.message ||
+          error?.details ||
+          error?.hint ||
+          "Erreur lors de la sauvegarde."
+      );
+
       return null;
+    
     } finally {
       setIsSaving(false);
     }
-    
   };
+
   const handleFinalizeDesign = async (data: QrDesignData) => {
     setQrDesign(data);
 
@@ -327,32 +359,79 @@ export function CreateQrForm({
 
           {step === "type" && (
             <div className="animate-in slide-in-from-bottom-2 fade-in duration-300">
-              <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-                {QR_TYPES.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setSelectedType(item.id);
-                      setQrData({});
-                      setSavedQrId(null);
-                      unlockStep("content");
-                    }}
-                    className={`flex flex-col items-center gap-2 rounded-xl border p-3 transition ${
-                      selectedType === item.id
-                        ? "border-white/20 bg-white/10"
-                        : "border-white/5 bg-white/[0.02]"
-                    }`}
-                  >
-                    <div
-                      className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                        selectedType === item.id ? `bg-gradient-to-br ${item.accent}` : "bg-white/5"
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                {[
+                  { id: "all", label: "Tous" },
+                  { id: "dynamic", label: "Dynamiques" },
+                  { id: "static", label: "Statiques" },
+                ].map((filter) => {
+                  const active = typeFilter === filter.id;
+
+                  return (
+                    <button
+                      key={filter.id}
+                      onClick={() => setTypeFilter(filter.id as QrModeFilter)}
+                      className={`rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wide transition ${
+                        active
+                          ? "bg-white text-black"
+                          : "border border-white/10 bg-white/[0.03] text-white/65 hover:bg-white/[0.06]"
                       }`}
                     >
-                      {item.icon}
-                    </div>
-                    <span className="text-[10px] font-bold">{item.label}</span>
-                  </button>
-                ))}
+                      {filter.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs text-white/60">
+                {typeFilter === "all" && "Affichage de tous les types de QR codes."}
+                {typeFilter === "dynamic" &&
+                  "Les QR dynamiques permettent le suivi des scans et les analytics."}
+                {typeFilter === "static" &&
+                  "Les QR statiques sont téléchargeables, mais ne permettent pas le tracking des scans."}
+              </div>
+
+              <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+                {filteredQrTypes.map((item) => {
+                  const isDynamic = getQrMode(item.id) === "dynamic";
+
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setSelectedType(item.id);
+                        setQrData({});
+                        setSavedQrId(null);
+                        unlockStep("content");
+                      }}
+                      className={`relative flex flex-col items-center gap-2 rounded-xl border p-3 transition ${
+                        selectedType === item.id
+                          ? "border-white/20 bg-white/10"
+                          : "border-white/5 bg-white/[0.02]"
+                      }`}
+                    >
+                      <span
+                        className={`absolute right-2 top-2 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                          isDynamic
+                            ? "bg-emerald-500/15 text-emerald-400"
+                            : "bg-white/8 text-white/45"
+                        }`}
+                      >
+                        {isDynamic ? "dyn" : "stat"}
+                      </span>
+
+                      <div
+                        className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                          selectedType === item.id ? `bg-gradient-to-br ${item.accent}` : "bg-white/5"
+                        }`}
+                      >
+                        {item.icon}
+                      </div>
+
+                      <span className="text-[10px] font-bold">{item.label}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="mt-6 flex justify-end">
@@ -400,6 +479,7 @@ export function CreateQrForm({
               onBack={() => setStep("design")}
               onCreateAnother={() => {
                 setSelectedType("url");
+                setTypeFilter("all");
                 setStep("type");
                 setFurthestStep("type");
                 setQrData({});
@@ -409,7 +489,7 @@ export function CreateQrForm({
                   dotsStyle: "square",
                   cornersStyle: "square",
                 });
-                setSaveError(null);
+                setSaveError(null); 
                 setSavedQrId(null);
               }}
             />
@@ -421,15 +501,36 @@ export function CreateQrForm({
         </div>
 
         <aside className="flex flex-col items-center rounded-3xl border border-white/10 bg-[#0A0A0A] p-5 shadow-2xl lg:sticky lg:top-24">
-          <div className="mb-4 flex w-full items-center justify-between">
+          <div className="mb-4 flex w-full items-center justify-between gap-2">
             <p className="text-[10px] uppercase tracking-widest text-white/40">Live Preview</p>
-            <div className={`rounded-full bg-gradient-to-r px-2 py-0.5 text-[9px] font-bold ${activeType.accent}`}>
-              {selectedType.toUpperCase()}
+
+            <div className="flex items-center gap-2">
+              <div
+                className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                  selectedTypeMode === "dynamic"
+                    ? "bg-emerald-500/15 text-emerald-400"
+                    : "bg-white/8 text-white/45"
+                }`}
+              >
+                {selectedTypeMode === "dynamic" ? "Dynamique" : "Statique"}
+              </div>
+
+              <div
+                className={`rounded-full bg-gradient-to-r px-2 py-0.5 text-[9px] font-bold ${activeType.accent}`}
+              >
+                {selectedType.toUpperCase()}
+              </div>
             </div>
           </div>
 
           <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl bg-white p-2">
             <StyledQrPreview data={qrValue} design={qrDesign as QrDesignData} />
+          </div>
+
+          <div className="mt-4 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-[11px] leading-5 text-white/55">
+            {selectedTypeMode === "dynamic"
+              ? "Ce QR pourra suivre les scans via redirection et analytics."
+              : "Ce QR sera enregistré et retéléchargeable, mais sans tracking des scans."}
           </div>
 
           <div className="mt-5" />
