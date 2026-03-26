@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import StyledQrPreview from "@/components/dashboard/styled-qr-preview";
-import CreateQrContent from "@/components/dashboard/create-qr-content";
-import CreateQrDesign from "@/components/dashboard/create-qr-design";
-import CreateQrExport from "@/components/dashboard/create-qr-export";
-import type { QrDesignData } from "@/components/dashboard/create-qr-design";
-import { buildQrValue } from "./qr-utils";
+import StyledQrPreview from "@/features/dashboard/components/styled-qr-preview";
+import CreateQrContent from "@/features/dashboard/create/create-qr-content";
+import CreateQrDesign from "@/features/dashboard/create/create-qr-design";
+import CreateQrExport from "@/features/dashboard/create/create-qr-export";
+import type { QrDesignData } from "@/features/dashboard/create/create-qr-design";
+import { buildQrValue } from "@/features/dashboard/lib/qr-utils";
 import { supabase } from "@/lib/supabase/client";
 
 import {
@@ -229,6 +229,7 @@ export function CreateQrForm({
             content: JSON.stringify(nextData),
             design: nextDesign,
             qr_value: rawQrValue,
+            status: "active",
           })
           .select("id")
           .single();
@@ -252,24 +253,36 @@ export function CreateQrForm({
           content: JSON.stringify(nextData),
           design: nextDesign,
           qr_value: finalQrValue,
+          status: "active",
         })
         .eq("id", finalId)
         .eq("user_id", user.id);
 
       if (updateError) throw updateError;
 
-      unlockStep("export");
-      setStep("export");
-
       if (finalId && onSaved) {
         onSaved(finalId);
       }
+
+      return finalId;
     } catch (error: any) {
       console.error("SAVE QR ERROR:", error);
       setSaveError(error?.message || JSON.stringify(error) || "Erreur lors de la sauvegarde.");
+      return null;
     } finally {
       setIsSaving(false);
     }
+    
+  };
+  const handleFinalizeDesign = async (data: QrDesignData) => {
+    setQrDesign(data);
+
+    const savedId = await saveQrCode(selectedType, qrData, data);
+
+    if (!savedId) return;
+
+    unlockStep("export");
+    setStep("export");
   };
 
   return (
@@ -375,10 +388,7 @@ export function CreateQrForm({
               initialData={qrDesign}
               onBack={() => setStep("content")}
               onLiveChange={setQrDesign}
-              onNext={(data) => {
-                setQrDesign(data);
-                saveQrCode(selectedType, qrData, data);
-              }}
+              onNext={handleFinalizeDesign}
             />
           )}
 

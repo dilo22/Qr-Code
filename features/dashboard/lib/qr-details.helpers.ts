@@ -1,4 +1,4 @@
-import type { DeviceType, QRCodeItem } from "./qr-details.types";
+import type { DeviceType, QRCodeItem } from "@/features/dashboard/types/qr-details.types";
 
 export function parseContent(content: unknown) {
   if (!content) return null;

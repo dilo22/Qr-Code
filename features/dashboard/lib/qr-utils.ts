@@ -1,4 +1,4 @@
-import type { QrDesignData } from "./create-qr-design";
+import type { QrDesignData } from "@/features/dashboard/create/create-qr-design";
 
 export const QR_RENDER_SIZE = 1024;
 

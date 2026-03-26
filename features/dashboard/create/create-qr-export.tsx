@@ -13,7 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import QRCodeStyling from "qr-code-styling";
 import Link from "next/link";
 import type { QrDesignData } from "./create-qr-design";
-import { buildQrOptions, buildQrValue, QR_RENDER_SIZE } from "./qr-utils";
+import { buildQrOptions, buildQrValue, QR_RENDER_SIZE } from "@/features/dashboard/lib/qr-utils";
 
 type Props = {
   type: string;

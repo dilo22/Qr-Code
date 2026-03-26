@@ -3,7 +3,7 @@
 import { ReactNode, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { Sidebar } from "@/components/dashboard/sidebar";
+import { Sidebar } from "@/features/dashboard/components//sidebar";
 
 export default function DashboardLayout({
   children,

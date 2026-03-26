@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AUTOPLAY_DURATION, steps } from "./home.data";
+import { AUTOPLAY_DURATION, steps } from "@/features/home/data/home.data";
 
 export function useHomePage() {
   const router = useRouter();
@@ -75,6 +75,10 @@ export function useHomePage() {
     router.push("/auth");
   };
 
+  const navigateToDashboard = () => {
+    router.push("/dashboard");
+  };
+
   const goHome = () => {
     router.push("/");
   };
@@ -100,6 +104,7 @@ export function useHomePage() {
     isProgressAnimating,
     autoplayDuration,
     navigateToAuth,
+    navigateToDashboard,
     goHome,
     scrollToSection,
     handleStepClick,

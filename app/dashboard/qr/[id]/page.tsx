@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import QrDetailsView from "@/components/dashboard/qr-details/qr-details-view";
+import QrDetailsView from "@/features/dashboard/components/qr-details-view";
 
 export default function QrDetailsPage() {
   const params = useParams();

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { CreateQrForm } from "@/components/dashboard/create-qr-form";
+import { CreateQrForm } from "@/features/dashboard/create/create-qr-form";
 
 type QRCodeRow = {
   id: string;

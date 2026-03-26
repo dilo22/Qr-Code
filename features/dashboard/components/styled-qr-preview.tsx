@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import QRCodeStyling from "qr-code-styling";
-import type { QrDesignData } from "./create-qr-design";
-import { buildQrOptions, QR_RENDER_SIZE } from "./qr-utils";
+import type { QrDesignData } from "@/features/dashboard/create/create-qr-design";
+import { buildQrOptions, QR_RENDER_SIZE } from "@/features/dashboard/lib/qr-utils";
 
 type StyledQrPreviewProps = {
   data: string;

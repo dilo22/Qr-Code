@@ -16,11 +16,11 @@ import {
   Phone,
 } from "lucide-react";
 
-import StepTypeAnimation from "@/components/steps/StepTypeAnimation";
-import StepContentAnimation from "@/components/steps/StepContentAnimation";
-import StepDesignAnimation from "@/components/steps/StepDesignAnimation";
-import StepExportAnimation from "@/components/steps/StepExportAnimation";
-import StepAnalyticsAnimation from "@/components/steps/StepAnalyticsAnimation";
+import StepTypeAnimation from "@/features/steps/components/StepTypeAnimation";
+import StepContentAnimation from "@/features/steps/components/StepContentAnimation";
+import StepDesignAnimation from "@/features/steps/components/StepDesignAnimation";
+import StepExportAnimation from "@/features/steps/components/StepExportAnimation";
+import StepAnalyticsAnimation from "@/features/steps/components/StepAnalyticsAnimation";
 
 export const AUTOPLAY_DURATION = 5000;
 

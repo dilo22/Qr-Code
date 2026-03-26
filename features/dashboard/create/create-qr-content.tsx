@@ -106,7 +106,7 @@ export default function CreateQrContent({
 
   const renderUrlField = (
     label = "Lien de redirection",
-    placeholder = "https://ton-lien.com",
+    placeholder = "https://neonpulseqr.vercel.app/",
     field = "url"
   ) => (
     <Field label={label} icon={<Globe size={15} />}>

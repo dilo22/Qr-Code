@@ -7,14 +7,14 @@ import {ArrowLeft,CalendarDays,Clock,Eye,Pencil,QrCode,Activity,Palette,Type,Che
   TrendingDown,Sparkles,MapPin,ScanLine,AlertTriangle,Trash2,} from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import QRCodeStyling from "qr-code-styling";
-import { buildQrOptions } from "@/components/dashboard/qr-utils";
-import type { QrDesignData } from "@/components/dashboard/create-qr-design";
+import { buildQrOptions } from "@/features/dashboard/lib/qr-utils";
+import type { QrDesignData } from "@/features/dashboard/create/create-qr-design";
 import {Area,AreaChart,CartesianGrid,Cell,Pie,PieChart,ResponsiveContainer,Tooltip,XAxis,YAxis,} from "recharts";
 
-import type { DeviceType, QRCodeItem, QRScanItem } from "./qr-details.types";
+import type { DeviceType, QRCodeItem, QRScanItem } from "@/features/dashboard/types/qr-details.types";
 import {formatDate,formatLastScan,getDeviceLabel,getDisplayName,getPreviewValue,getStatus,normalizeDevice,
-  parseContent,} from "./qr-details.helpers";
-import { buildQrAnalytics } from "./qr-details.analytics";
+  parseContent,} from "@/features/dashboard/lib/qr-details.helpers";
+import { buildQrAnalytics } from "@/features/dashboard/lib/qr-details.analytics";
 
 type Props = {
   qrId: string;

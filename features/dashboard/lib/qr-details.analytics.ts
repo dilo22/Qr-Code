@@ -4,7 +4,7 @@ import type {
   GeoBreakdownItem,
   QRScanItem,
   ScanSeriesPoint,
-} from "./qr-details.types";
+} from "@/features/dashboard/types/qr-details.types";
 import {
   formatCompactDate,
   getDaysSince,

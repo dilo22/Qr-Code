@@ -1,4 +1,4 @@
-import { accentStyles, featureStars, qrTypes } from "./home.data";
+import { accentStyles, featureStars, qrTypes } from "@/features/home/data/home.data";
 
 type HomeFeaturesProps = {
   onCardClick: () => void;

@@ -1,0 +1,124 @@
+qrcode/
+├── app/
+│   ├── auth/
+│   │   └── page.tsx
+│   ├── dashboard/
+│   │   ├── create/
+│   │   │   └── page.tsx
+│   │   ├── qr/
+│   │   │   └── [id]/
+│   │   │       ├── edit/
+│   │   │       │   └── page.tsx
+│   │   │       └── page.tsx
+│   │   ├── settings/
+│   │   │   └── page.tsx
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── s/
+│   │   └── [id]/
+│   │       └── route.ts
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+│
+├── features/
+│   ├── auth/
+│   │   ├── components/
+│   │   │   └── AutoLogout.tsx
+│   │   ├── hooks/
+│   │   │   └── useAuthUser.ts
+│   │   └── index.ts
+│   │
+│   ├── dashboard/
+│   │   ├── components/
+│   │   │   ├── CustomSelect.tsx
+│   │   │   ├── DashboardFilters.tsx
+│   │   │   ├── DashboardHeader.tsx
+│   │   │   ├── DashboardView.tsx
+│   │   │   ├── MiniQR.tsx
+│   │   │   ├── QRCard.tsx
+│   │   │   ├── QRDetailsView.tsx
+│   │   │   ├── SettingsForm.tsx
+│   │   │   ├── Sidebar.tsx
+│   │   │   └── StyledQRPreview.tsx
+│   │   ├── hooks/
+│   │   │   └── useDashboardData.ts
+│   │   ├── lib/
+│   │   │   ├── dashboard.utils.ts
+│   │   │   ├── qr-utils.ts
+│   │   │   ├── qr-details.helpers.ts
+│   │   │   └── qr-details.analytics.ts
+│   │   ├── types/
+│   │   │   ├── dashboard.types.ts
+│   │   │   └── qr-details.types.ts
+│   │   ├── create/
+│   │   │   ├── CreateQRContent.tsx
+│   │   │   ├── CreateQRDesign.tsx
+│   │   │   ├── CreateQRExport.tsx
+│   │   │   └── CreateQRForm.tsx
+│   │   └── index.ts
+│   │
+│   ├── home/
+│   │   ├── components/
+│   │   │   ├── HomeAnalytics.tsx
+│   │   │   ├── HomeAnimationsStyle.tsx
+│   │   │   ├── HomeBackground.tsx
+│   │   │   ├── HomeCTA.tsx
+│   │   │   ├── HomeFeatures.tsx
+│   │   │   ├── HomeFooter.tsx
+│   │   │   ├── HomeHeader.tsx
+│   │   │   ├── HomeHero.tsx
+│   │   │   └── HomeWorkflow.tsx
+│   │   ├── hooks/
+│   │   │   └── useHomePage.ts
+│   │   ├── data/
+│   │   │   └── home.data.ts
+│   │   ├── ui/
+│   │   │   ├── GlassCard.tsx
+│   │   │   └── NavLink.tsx
+│   │   └── index.ts
+│   │
+│   └── steps/
+│       ├── components/
+│       │   ├── StepAnalyticsAnimation.tsx
+│       │   ├── StepContentAnimation.tsx
+│       │   ├── StepDesignAnimation.tsx
+│       │   ├── StepExportAnimation.tsx
+│       │   └── StepTypeAnimation.tsx
+│       └── index.ts
+│
+├── shared/
+│   ├── ui/
+│   ├── hooks/
+│   ├── types/
+│   └── utils/
+│
+├── lib/
+│   └── supabase/
+│       └── client.ts
+│
+├── public/
+│   ├── screens/
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── Sans titre-1.png
+│   ├── vercel.svg
+│   └── window.svg
+│
+├── .env.local
+├── .gitignore
+├── AGENTS.md
+├── CLAUDE.md
+├── eslint.config.mjs
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── postcss.config.mjs
+├── README.md
+├── structure.txt
+├── tsconfig.json
+├── tsconfig.tsbuildinfo
+└── appréserve.tsx

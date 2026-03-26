@@ -1,4 +1,4 @@
-import { stepComponents, steps } from "./home.data";
+import { stepComponents, steps } from "@/features/home/data/home.data";
 
 type HomeWorkflowProps = {
   activeStep: number;

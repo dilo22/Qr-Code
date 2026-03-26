@@ -14,6 +14,8 @@ import {
   Trash2,
   Filter,
   ArrowUpDown,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import QRCodeStyling from "qr-code-styling";
@@ -38,6 +40,11 @@ type QRScanItem = {
 };
 
 type SortOption = "recent" | "oldest" | "name" | "scans";
+
+type SelectOption = {
+  label: string;
+  value: string;
+};
 
 function getProjectDisplayName(project: QRCodeItem) {
   return project.name || project.title || "Sans titre";
@@ -159,6 +166,93 @@ function formatLastScan(date?: string) {
   return `Il y a ${Math.floor(diffHours / 24)} j`;
 }
 
+function CustomSelect({
+  icon,
+  value,
+  options,
+  onChange,
+  placeholder,
+  minWidthClass = "min-w-[180px]",
+}: {
+  icon?: React.ReactNode;
+  value: string;
+  options: SelectOption[];
+  onChange: (value: string) => void;
+  placeholder?: string;
+  minWidthClass?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const selectedOption = options.find((option) => option.value === value);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} className={`relative ${minWidthClass}`}>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-left text-sm text-white outline-none transition hover:border-white/20 hover:bg-white/[0.05] focus:border-cyan-500/40"
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          {icon && <span className="shrink-0 text-white/30">{icon}</span>}
+          <span className="truncate">
+            {selectedOption?.label || placeholder || "Sélectionner"}
+          </span>
+        </div>
+
+        <ChevronDown
+          size={16}
+          className={`shrink-0 text-white/40 transition-transform duration-200 ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#0b0b0d]/95 shadow-2xl backdrop-blur-xl">
+          <div className="max-h-64 overflow-y-auto p-2">
+            {options.map((option) => {
+              const active = option.value === value;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-3 text-sm transition-all ${
+                    active
+                      ? "bg-white text-black"
+                      : "text-white/70 hover:bg-white/[0.06] hover:text-white"
+                  }`}
+                >
+                  <span className="truncate">{option.label}</span>
+                  {active && <Check size={14} className="shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function DashboardView() {
   const router = useRouter();
 
@@ -200,7 +294,11 @@ export function DashboardView() {
 
         const [{ data: profile }, { data: qrCodes }, { data: qrScans }] =
           await Promise.all([
-            supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+            supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("id", user.id)
+              .maybeSingle(),
             supabase
               .from("qr_codes")
               .select("*")
@@ -220,7 +318,11 @@ export function DashboardView() {
         setProjects(safeQrCodes);
 
         const userQrIds = new Set(safeQrCodes.map((q) => q.id));
-        setScans(((qrScans || []) as QRScanItem[]).filter((s) => userQrIds.has(s.qr_code_id)));
+        setScans(
+          ((qrScans || []) as QRScanItem[]).filter((s) =>
+            userQrIds.has(s.qr_code_id)
+          )
+        );
       } catch (error) {
         console.error("Erreur dashboard :", error);
       } finally {
@@ -247,9 +349,29 @@ export function DashboardView() {
   }, [scans]);
 
   const availableTypes = useMemo(() => {
-    const types = Array.from(new Set(projects.map((project) => project.type).filter(Boolean)));
+    const types = Array.from(
+      new Set(projects.map((project) => project.type).filter(Boolean))
+    );
     return types.sort((a, b) => a.localeCompare(b));
   }, [projects]);
+
+  const typeOptions = useMemo<SelectOption[]>(
+    () => [
+      { label: "Tous les types", value: "all" },
+      ...availableTypes.map((type) => ({
+        label: type,
+        value: type,
+      })),
+    ],
+    [availableTypes]
+  );
+
+  const sortOptions: SelectOption[] = [
+    { label: "Plus récents", value: "recent" },
+    { label: "Plus anciens", value: "oldest" },
+    { label: "Nom A → Z", value: "name" },
+    { label: "Plus de scans", value: "scans" },
+  ];
 
   const filteredProjects = useMemo(() => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
@@ -264,18 +386,23 @@ export function DashboardView() {
         type.includes(normalizedSearch);
 
       const matchesType =
-        selectedType === "all" || project.type.toLowerCase() === selectedType.toLowerCase();
+        selectedType === "all" ||
+        project.type.toLowerCase() === selectedType.toLowerCase();
 
       return matchesSearch && matchesType;
     });
 
     return filtered.sort((a, b) => {
       if (sortBy === "recent") {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
       }
 
       if (sortBy === "oldest") {
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        return (
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
       }
 
       if (sortBy === "name") {
@@ -317,7 +444,9 @@ export function DashboardView() {
 
       if (error) throw error;
 
-      setProjects((prev) => prev.filter((project) => project.id !== projectId));
+      setProjects((prev) =>
+        prev.filter((project) => project.id !== projectId)
+      );
       setScans((prev) => prev.filter((scan) => scan.qr_code_id !== projectId));
     } catch (error) {
       console.error("Erreur suppression QR code :", error);
@@ -368,35 +497,21 @@ export function DashboardView() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="relative">
-              <Filter className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-              <select
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
-                className="min-w-[180px] appearance-none rounded-2xl border border-white/10 bg-black/30 py-3 pl-11 pr-10 text-sm text-white outline-none transition focus:border-cyan-500/40"
-              >
-                <option value="all">Tous les types</option>
-                {availableTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <CustomSelect
+              icon={<Filter size={16} />}
+              value={selectedType}
+              options={typeOptions}
+              onChange={setSelectedType}
+              placeholder="Tous les types"
+            />
 
-            <div className="relative">
-              <ArrowUpDown className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="min-w-[180px] appearance-none rounded-2xl border border-white/10 bg-black/30 py-3 pl-11 pr-10 text-sm text-white outline-none transition focus:border-cyan-500/40"
-              >
-                <option value="recent">Plus récents</option>
-                <option value="oldest">Plus anciens</option>
-                <option value="name">Nom A → Z</option>
-                <option value="scans">Plus de scans</option>
-              </select>
-            </div>
+            <CustomSelect
+              icon={<ArrowUpDown size={16} />}
+              value={sortBy}
+              options={sortOptions}
+              onChange={(value) => setSortBy(value as SortOption)}
+              placeholder="Tri"
+            />
           </div>
         </div>
 

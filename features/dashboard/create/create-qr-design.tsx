@@ -354,6 +354,7 @@ export default function CreateQrDesign({
 
       <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-8">
         <button
+          type="button"
           onClick={onBack}
           className="text-sm font-bold text-white/30 transition-colors hover:text-white"
         >
@@ -369,6 +370,7 @@ export default function CreateQrDesign({
           </button>
 
           <button
+            type="button"
             onClick={() => onNext?.(design)}
             className="flex h-16 items-center gap-3 rounded-2xl bg-blue-600 px-12 font-black uppercase tracking-tight text-white transition-all hover:bg-blue-500"
           >

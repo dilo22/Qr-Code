@@ -1,15 +1,15 @@
 "use client";
 
-import { HomeHero } from "@/components/home/HomeHero";
-import { HomeFeatures } from "@/components/home/HomeFeatures";
-import { HomeWorkflow } from "@/components/home/HomeWorkflow";
-import { HomeAnalytics } from "@/components/home/HomeAnalytics";
-import { HomeCTA } from "@/components/home/HomeCTA";
-import { HomeHeader } from "@/components/home/HomeHeader";
-import { HomeFooter } from "@/components/home/HomeFooter";
-import { HomeBackground } from "@/components/home/HomeBackground";
-import { HomeAnimationsStyle } from "@/components/home/HomeAnimationsStyle";
-import { useHomePage } from "@/components/home/useHomePage";
+import { HomeHero } from "@/features/home/components/HomeHero";
+import { HomeFeatures } from "@/features/home/components/HomeFeatures";
+import { HomeWorkflow } from "@/features/home/components/HomeWorkflow";
+import { HomeAnalytics } from "@/features/home/components/HomeAnalytics";
+import { HomeCTA } from "@/features/home/components/HomeCTA";
+import { HomeHeader } from "@/features/home/components/HomeHeader";
+import { HomeFooter } from "@/features/home/components/HomeFooter";
+import { HomeBackground } from "@/features/home/components/HomeBackground";
+import { HomeAnimationsStyle } from "@/features/home/components/HomeAnimationsStyle";
+import { useHomePage } from "@/features/home/hooks/useHomePage";
 
 export default function HomePage() {
   const home = useHomePage();
@@ -22,6 +22,7 @@ export default function HomePage() {
         scrolled={home.scrolled}
         onLogoClick={home.goHome}
         onAuthClick={home.navigateToAuth}
+        onDashboardClick={home.navigateToDashboard}
         onScrollToSection={home.scrollToSection}
       />
 

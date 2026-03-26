@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AutoLogout } from "@/features/auth/components/AutoLogout";
 
 export const metadata: Metadata = {
   title: "MyQR",
@@ -13,7 +14,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" data-scroll-behavior="smooth">
-      <body>{children}</body>
+      <body>
+        <AutoLogout timeoutMs={15 * 60 * 1000} />
+        {children}
+      </body>
     </html>
   );
 }

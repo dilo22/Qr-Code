@@ -1,4 +1,4 @@
-import { GlassCard } from "./ui/GlassCard";
+import { GlassCard } from "@/features/home/ui/GlassCard";
 
 export function HomeAnalytics() {
   return (
