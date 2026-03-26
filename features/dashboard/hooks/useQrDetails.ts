@@ -16,54 +16,69 @@ export function useQrDetails(qrId: string) {
 
   useEffect(() => {
     async function loadQrDetails() {
-      if (!qrId) {
-        setError("ID du QR code manquant.");
+    if (!qrId) {
+      setError("ID du QR code manquant.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      console.log("user:", user);
+      console.log("qrId:", qrId);
+
+      if (!user) {
+        setError("Utilisateur non connecté.");
         setLoading(false);
         return;
       }
 
-      try {
-        setLoading(true);
-        setError(null);
+      const { data: qrDataById, error: qrByIdError } = await supabase
+        .from("qr_codes")
+        .select("*")
+        .eq("id", qrId)
+        .maybeSingle();
 
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+      console.log("qrDataById:", qrDataById);
+      console.log("qrByIdError:", qrByIdError);
 
-        if (!user) {
-          setError("Utilisateur non connecté.");
-          setLoading(false);
-          return;
-        }
+      if (qrByIdError) throw qrByIdError;
 
-        const { data: qrData, error: qrError } = await supabase
-          .from("qr_codes")
-          .select("*")
-          .eq("id", qrId)
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (qrError) throw qrError;
-        if (!qrData) throw new Error("QR introuvable ou accès refusé.");
-
-        const { data: scansData, error: scansError } = await supabase
-          .from("qr_scans")
-          .select("id, qr_code_id, scanned_at, country, city, device")
-          .eq("qr_code_id", qrId)
-          .order("scanned_at", { ascending: false });
-
-        if (scansError) throw scansError;
-
-        setQr(qrData as QRCodeItem);
-        setScans((scansData || []) as QRScanItem[]);
-      } catch (err: any) {
-        console.error("DETAIL ERROR:", err);
-        setError(err?.message || "Impossible de charger ce QR code.");
-      } finally {
-        setLoading(false);
+      if (!qrDataById) {
+        throw new Error("QR introuvable.");
       }
-    }
 
+      if (qrDataById.user_id !== user.id) {
+        throw new Error("Accès refusé à ce QR code.");
+      }
+
+      const { data: scansData, error: scansError } = await supabase
+        .from("qr_scans")
+        .select("id, qr_code_id, scanned_at, country, city, device, visitor_key")
+        .eq("qr_code_id", qrId)
+        .order("scanned_at", { ascending: false });
+
+      console.log("scansData:", scansData);
+      console.log("scansError:", scansError);
+
+      if (scansError) throw scansError;
+
+      setQr(qrDataById);
+      setScans((scansData || []) as QRScanItem[]);
+    } catch (err: any) {
+      console.error("DETAIL ERROR:", err);
+      setError(err?.message || "Impossible de charger ce QR code.");
+    } finally {
+      setLoading(false);
+    }
+  }
+    
     loadQrDetails();
   }, [qrId]);
 

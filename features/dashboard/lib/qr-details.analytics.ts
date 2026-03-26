@@ -1,180 +1,234 @@
-import type {
-  DeviceBreakdownItem,
-  DeviceType,
-  GeoBreakdownItem,
-  QRScanItem,
-  ScanSeriesPoint,
-} from "@/features/dashboard/types/qr-details.types";
-import {
-  formatCompactDate,
-  getDaysSince,
-  getDeviceLabel,
-  getGrowth,
-  normalizeDevice,
-} from "./qr-details.helpers";
+import type { QRScanItem, DeviceType } from "@/features/dashboard/types/qr-details.types";
+import { normalizeDevice } from "@/features/dashboard/lib/qr-details.helpers";
+
+type InsightTone = "positive" | "warning" | "neutral";
+
+type Insight = {
+  title: string;
+  description: string;
+  tone: InsightTone;
+};
+
+type ScanSeriesItem = {
+  label: string;
+  scans: number;
+};
+
+type DeviceBreakdownItem = {
+  name: DeviceType;
+  value: number;
+  percentage: number;
+};
+
+type GeoBreakdownItem = {
+  country: string;
+  city: string;
+  count: number;
+};
+
+type ScanHistoryItem = QRScanItem & {
+  isUniqueVisitor: boolean | null;
+  visitIndex: number | null;
+};
+
+function startOfDay(date: Date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function formatDayLabel(date: Date) {
+  return date.toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "2-digit",
+  });
+}
 
 export function buildQrAnalytics(scans: QRScanItem[]) {
-  const safeScans = scans.filter((scan) => scan.scanned_at);
-
-  const totalScans = safeScans.length;
-  const lastScan = safeScans[0]?.scanned_at || null;
-
   const now = new Date();
-  const start30 = new Date();
-  start30.setDate(now.getDate() - 29);
-  start30.setHours(0, 0, 0, 0);
+  const totalScans = scans.length;
 
-  const scansByDay = new Map<string, number>();
-  for (let i = 0; i < 30; i++) {
-    const date = new Date(start30);
-    date.setDate(start30.getDate() + i);
-    const key = date.toISOString().slice(0, 10);
-    scansByDay.set(key, 0);
-  }
+  const last24h = scans.filter((scan) => {
+    const diff = now.getTime() - new Date(scan.scanned_at).getTime();
+    return diff <= 24 * 60 * 60 * 1000;
+  }).length;
 
-  safeScans.forEach((scan) => {
-    const key = new Date(scan.scanned_at as string).toISOString().slice(0, 10);
-    if (scansByDay.has(key)) {
-      scansByDay.set(key, (scansByDay.get(key) || 0) + 1);
-    }
+  const last7 = scans.filter((scan) => {
+    const diff = now.getTime() - new Date(scan.scanned_at).getTime();
+    return diff <= 7 * 24 * 60 * 60 * 1000;
+  }).length;
+
+  const prev7 = scans.filter((scan) => {
+    const diff = now.getTime() - new Date(scan.scanned_at).getTime();
+    return diff > 7 * 24 * 60 * 60 * 1000 && diff <= 14 * 24 * 60 * 60 * 1000;
+  }).length;
+
+  const growth7d =
+    prev7 === 0 ? (last7 > 0 ? 100 : 0) : Math.round(((last7 - prev7) / prev7) * 100);
+
+  const lastScan = scans.length > 0 ? scans[0].scanned_at : null;
+
+  const daysSinceLastScan = lastScan
+    ? Math.floor((now.getTime() - new Date(lastScan).getTime()) / (24 * 60 * 60 * 1000))
+    : null;
+
+  function toDayKey(dateLike: string | Date) {
+  const date = new Date(dateLike);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+const scansByDay = new Map<string, number>();
+
+for (const scan of scans) {
+  const key = toDayKey(scan.scanned_at);
+  if (!key) continue;
+  scansByDay.set(key, (scansByDay.get(key) || 0) + 1);
+}
+
+const scansSeries: ScanSeriesItem[] = [];
+
+for (let i = 29; i >= 0; i--) {
+  const day = new Date();
+  day.setHours(0, 0, 0, 0);
+  day.setDate(day.getDate() - i);
+
+  const key = toDayKey(day);
+  const count = key ? scansByDay.get(key) || 0 : 0;
+
+  scansSeries.push({
+    label: formatDayLabel(day),
+    scans: count,
   });
-
-  const scansSeries: ScanSeriesPoint[] = Array.from(scansByDay.entries()).map(([date, value]) => ({
-    date,
-    label: formatCompactDate(date),
-    scans: value,
-  }));
-
-  const last7 = safeScans.filter((scan) => {
-    const d = new Date(scan.scanned_at as string).getTime();
-    return d >= Date.now() - 7 * 24 * 60 * 60 * 1000;
-  }).length;
-
-  const prev7 = safeScans.filter((scan) => {
-    const d = new Date(scan.scanned_at as string).getTime();
-    return (
-      d < Date.now() - 7 * 24 * 60 * 60 * 1000 &&
-      d >= Date.now() - 14 * 24 * 60 * 60 * 1000
-    );
-  }).length;
-
-  const last24h = safeScans.filter((scan) => {
-    const d = new Date(scan.scanned_at as string).getTime();
-    return d >= Date.now() - 24 * 60 * 60 * 1000;
-  }).length;
-
-  const growth7d = getGrowth(last7, prev7);
+}
 
   const deviceMap = new Map<DeviceType, number>();
-  safeScans.forEach((scan) => {
+  for (const scan of scans) {
     const device = normalizeDevice(scan.device);
     deviceMap.set(device, (deviceMap.get(device) || 0) + 1);
-  });
+  }
 
   const deviceBreakdown: DeviceBreakdownItem[] = Array.from(deviceMap.entries())
     .map(([name, value]) => ({
       name,
       value,
-      percentage: totalScans ? Number(((value / totalScans) * 100).toFixed(1)) : 0,
+      percentage: totalScans > 0 ? Math.round((value / totalScans) * 100) : 0,
     }))
     .sort((a, b) => b.value - a.value);
 
   const geoMap = new Map<string, GeoBreakdownItem>();
-  safeScans.forEach((scan) => {
-    const country = scan.country || "Inconnu";
-    const city = scan.city || null;
-    const key = `${country}::${city || ""}`;
+  for (const scan of scans) {
+    const country = scan.country || "Pays inconnu";
+    const city = scan.city || "Ville inconnue";
+    const key = `${country}__${city}`;
+    const existing = geoMap.get(key);
 
-    geoMap.set(key, {
-      country,
-      city,
-      count: (geoMap.get(key)?.count || 0) + 1,
-    });
-  });
+    if (existing) {
+      existing.count += 1;
+    } else {
+      geoMap.set(key, { country, city, count: 1 });
+    }
+  }
 
   const geoBreakdown = Array.from(geoMap.values())
     .sort((a, b) => b.count - a.count)
-    .slice(0, 8);
+    .slice(0, 10);
 
-  const daysSinceLastScan = getDaysSince(lastScan);
-  const inactivityScore =
-    lastScan === null
-      ? 100
-      : Math.min(
-          100,
-          Math.max(0, Math.round((daysSinceLastScan || 0) * 4 + (last7 === 0 ? 25 : 0)))
-        );
+  const scansAsc = [...scans].sort(
+    (a, b) => new Date(a.scanned_at).getTime() - new Date(b.scanned_at).getTime()
+  );
 
-  const insights: Array<{
-    title: string;
-    description: string;
-    tone: "positive" | "warning" | "neutral";
-  }> = [];
+  const visitorSeenCount = new Map<string, number>();
+  let uniqueScans = 0;
+  let repeatScans = 0;
+
+  const historyWithFlagsAsc: ScanHistoryItem[] = scansAsc.map((scan) => {
+    const key = scan.visitor_key?.trim();
+
+    if (!key) {
+      return {
+        ...scan,
+        isUniqueVisitor: null,
+        visitIndex: null,
+      };
+    }
+
+    const seen = visitorSeenCount.get(key) || 0;
+    const nextCount = seen + 1;
+    visitorSeenCount.set(key, nextCount);
+
+    if (nextCount === 1) uniqueScans += 1;
+    else repeatScans += 1;
+
+    return {
+      ...scan,
+      isUniqueVisitor: nextCount === 1,
+      visitIndex: nextCount,
+    };
+  });
+
+  const scansHistory = historyWithFlagsAsc.reverse();
+
+  const insights: Insight[] = [];
 
   if (totalScans === 0) {
     insights.push({
-      tone: "neutral",
-      title: "Aucun scan détecté",
-      description:
-        "Ce QR n’a pas encore généré d’activité. Dès les premiers scans, les tendances apparaîtront ici.",
+      title: "Aucun scan pour le moment",
+      description: "Le QR code est prêt, mais aucun scan n’a encore été enregistré.",
+      tone: "warning",
     });
   } else {
+    if (last24h > 0) {
+      insights.push({
+        title: "Activité récente détectée",
+        description: `${last24h} scan${last24h > 1 ? "s" : ""} sur les dernières 24h.`,
+        tone: "positive",
+      });
+    }
+
     if (growth7d > 0) {
       insights.push({
+        title: "Croissance positive",
+        description: `Les scans progressent de ${growth7d}% sur 7 jours.`,
         tone: "positive",
-        title: `Croissance de +${growth7d}%`,
-        description:
-          "Les scans des 7 derniers jours sont supérieurs à ceux de la période précédente.",
       });
     } else if (growth7d < 0) {
       insights.push({
+        title: "Ralentissement récent",
+        description: `Les scans reculent de ${Math.abs(growth7d)}% sur 7 jours.`,
         tone: "warning",
-        title: `${growth7d}% sur 7 jours`,
-        description:
-          "L’activité ralentit. Ce QR mérite peut-être une relance ou un meilleur placement.",
       });
     }
 
-    const dominantDevice = deviceBreakdown[0];
-    if (dominantDevice && dominantDevice.percentage >= 60) {
+    if (daysSinceLastScan !== null && daysSinceLastScan >= 7) {
       insights.push({
-        tone: "neutral",
-        title: `${dominantDevice.percentage}% via ${getDeviceLabel(dominantDevice.name)}`,
-        description:
-          "La majorité des scans provient du même type d’appareil. Optimise la destination pour ce support.",
-      });
-    }
-
-    if ((daysSinceLastScan || 0) >= 7) {
-      insights.push({
+        title: "QR moins actif récemment",
+        description: `Aucun scan depuis ${daysSinceLastScan} jour(s).`,
         tone: "warning",
-        title: "QR potentiellement inactif",
-        description: `Aucun scan récent depuis ${daysSinceLastScan} jours.`,
-      });
-    }
-
-    if (last24h > 0) {
-      insights.push({
-        tone: "positive",
-        title: `${last24h} scan${last24h > 1 ? "s" : ""} sur 24h`,
-        description: "Le QR reste actif très récemment, ce qui est un bon signal d’engagement.",
       });
     }
   }
 
   return {
     totalScans,
-    lastScan,
+    uniqueScans,
+    repeatScans,
+    hasVisitorTracking: scans.some((scan) => Boolean(scan.visitor_key)),
     last24h,
     last7,
     prev7,
     growth7d,
+    lastScan,
+    daysSinceLastScan,
     scansSeries,
     deviceBreakdown,
     geoBreakdown,
-    daysSinceLastScan,
-    inactivityScore,
-    insights: insights.slice(0, 4),
-    recentScans: safeScans.slice(0, 12),
+    insights,
+    scansHistory,
   };
 }

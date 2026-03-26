@@ -1,6 +1,5 @@
 import {
   Activity,
-  AlertTriangle,
   Clock,
   Eye,
   Globe,
@@ -12,6 +11,8 @@ import {
   Tablet,
   TrendingDown,
   TrendingUp,
+  Users,
+  Repeat,
 } from "lucide-react";
 import {
   Area,
@@ -29,10 +30,7 @@ import {
 import { InfoCard } from "@/features/dashboard/components/ui/InfoCard";
 import { SectionCard } from "@/features/dashboard/components/ui/SectionCard";
 import { EmptyChartState } from "@/features/dashboard/components/ui/EmptyChartState";
-import type {
-  DeviceType,
-  QRScanItem,
-} from "@/features/dashboard/types/qr-details.types";
+import type { DeviceType } from "@/features/dashboard/types/qr-details.types";
 import {
   formatDate,
   formatLastScan,
@@ -48,7 +46,6 @@ type Analytics = ReturnType<
 
 type Props = {
   analytics: Analytics;
-  scans: QRScanItem[];
 };
 
 function DeviceIcon({ device }: { device: DeviceType }) {
@@ -58,18 +55,105 @@ function DeviceIcon({ device }: { device: DeviceType }) {
   return <ScanLine className="h-4 w-4" />;
 }
 
+function HistoryBadge({
+  isUniqueVisitor,
+  visitIndex,
+}: {
+  isUniqueVisitor: boolean | null;
+  visitIndex: number | null;
+}) {
+  if (isUniqueVisitor === null) {
+    return (
+      <span className="inline-flex rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-white/45">
+        Non déterminable
+      </span>
+    );
+  }
+
+  if (isUniqueVisitor) {
+    return (
+      <span className="inline-flex rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-300">
+        Unique
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-300">
+      Repeat #{visitIndex}
+    </span>
+  );
+}
+
 export function QrDetailsAnalytics({ analytics }: Props) {
   return (
     <>
       <div className="grid gap-4 xl:grid-cols-4">
         <InfoCard
           icon={<Eye className="h-4 w-4 text-cyan-400" />}
-          label="Total scans"
+          label="Scans totaux"
           value={<span className="text-2xl">{analytics.totalScans}</span>}
           hint={`${analytics.last24h} sur les dernières 24h`}
         />
+
         <InfoCard
-          icon={<Activity className="h-4 w-4 text-purple-400" />}
+          icon={<Users className="h-4 w-4 text-emerald-400" />}
+          label="Scans uniques"
+          value={
+            <span className="text-2xl">
+              {analytics.hasVisitorTracking ? analytics.uniqueScans : "—"}
+            </span>
+          }
+          hint={
+            analytics.hasVisitorTracking
+              ? "Première visite par appareil / visiteur détecté"
+              : "Nécessite visitor_key côté tracking"
+          }
+        />
+
+        <InfoCard
+          icon={<Repeat className="h-4 w-4 text-amber-400" />}
+          label="Scans répétés"
+          value={
+            <span className="text-2xl">
+              {analytics.hasVisitorTracking ? analytics.repeatScans : "—"}
+            </span>
+          }
+          hint={
+            analytics.hasVisitorTracking
+              ? "Scans déjà vus depuis le même visiteur"
+              : "Impossible sans identifiant visiteur"
+          }
+        />
+
+        <InfoCard
+          icon={<Clock className="h-4 w-4 text-purple-400" />}
+          label="Dernier scan"
+          value={formatLastScan(analytics.lastScan)}
+          hint={
+            analytics.daysSinceLastScan !== null
+              ? `${analytics.daysSinceLastScan} jour(s) d’écart`
+              : "Aucun scan enregistré"
+          }
+        />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        <InfoCard
+          icon={<Activity className="h-4 w-4 text-cyan-400" />}
+          label="Scans sur 24h"
+          value={<span className="text-2xl">{analytics.last24h}</span>}
+        />
+
+        <InfoCard
+          icon={<Activity className="h-4 w-4 text-white/70" />}
+          label="Scans sur 7 jours"
+          value={<span className="text-2xl">{analytics.last7}</span>}
+          hint={`${analytics.prev7} sur la période précédente`}
+        />
+
+        <InfoCard
+          icon={<TrendingUp className="h-4 w-4 text-emerald-400" />}
           label="Croissance 7 jours"
           value={
             <span
@@ -86,57 +170,10 @@ export function QrDetailsAnalytics({ analytics }: Props) {
               {analytics.growth7d}%
             </span>
           }
-          hint={`${analytics.last7} scans vs ${analytics.prev7} la période précédente`}
-        />
-        <InfoCard
-          icon={<Clock className="h-4 w-4 text-amber-400" />}
-          label="Dernier scan"
-          value={formatLastScan(analytics.lastScan)}
-          hint={
-            analytics.daysSinceLastScan !== null
-              ? `${analytics.daysSinceLastScan} jour(s) d’écart`
-              : "Aucun scan enregistré"
-          }
-        />
-        <InfoCard
-          icon={<AlertTriangle className="h-4 w-4 text-rose-400" />}
-          label="Score d’inactivité"
-          value={<span className="text-2xl">{analytics.inactivityScore}/100</span>}
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
-        {analytics.insights.length === 0 ? (
-          <div className="xl:col-span-4">
-            <EmptyChartState text="Aucun insight disponible pour le moment." />
-          </div>
-        ) : (
-          analytics.insights.map((insight, index) => {
-            const toneClasses =
-              insight.tone === "positive"
-                ? "border-emerald-400/15 bg-emerald-500/10"
-                : insight.tone === "warning"
-                ? "border-amber-400/15 bg-amber-500/10"
-                : "border-cyan-400/15 bg-cyan-500/10";
-
-            return (
-              <div
-                key={`${insight.title}-${index}`}
-                className={`rounded-[2rem] border p-5 ${toneClasses}`}
-              >
-                <div className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-[0.18em] text-white/85">
-                  <Sparkles className="h-4 w-4" />
-                  Insight
-                </div>
-                <p className="text-sm font-semibold text-white">{insight.title}</p>
-                <p className="mt-2 text-sm leading-6 text-white/55">
-                  {insight.description}
-                </p>
-              </div>
-            );
-          })
-        )}
-      </div>
+      
 
       <SectionCard
         title="Évolution des scans"
@@ -189,7 +226,7 @@ export function QrDetailsAnalytics({ analytics }: Props) {
       </SectionCard>
 
       <div className="grid gap-6 2xl:grid-cols-2">
-        <SectionCard title="Devices" subtitle="Répartition des appareils détectés">
+        <SectionCard title="Appareils" subtitle="Répartition des appareils détectés">
           {analytics.deviceBreakdown.length === 0 ? (
             <EmptyChartState text="Aucune donnée device disponible." />
           ) : (
@@ -236,9 +273,7 @@ export function QrDetailsAnalytics({ analytics }: Props) {
                   >
                     <span
                       className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{
-                        backgroundColor: PIE_COLORS[index % PIE_COLORS.length],
-                      }}
+                      style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
                     />
 
                     <div className="flex min-w-0 items-center gap-2">
@@ -295,37 +330,64 @@ export function QrDetailsAnalytics({ analytics }: Props) {
       </div>
 
       <SectionCard
-        title="Historique récent des scans"
-        subtitle="Feed live des derniers scans enregistrés"
+        title="Historique complet des scans"
+        subtitle="Tous les événements enregistrés, du plus récent au plus ancien"
       >
-        {analytics.recentScans.length === 0 ? (
+        {!analytics.hasVisitorTracking ? (
+          <div className="mb-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            Le statut Unique / Repeat n’est affiché correctement que si chaque scan stocke un
+            <span className="mx-1 font-semibold">visitor_key</span>.
+          </div>
+        ) : null}
+
+        {analytics.scansHistory.length === 0 ? (
           <p className="text-sm text-white/45">Aucun scan pour le moment.</p>
         ) : (
           <div className="space-y-3">
-            {analytics.recentScans.map((scan, index) => {
+            {analytics.scansHistory.map((scan, index) => {
               const device = normalizeDevice(scan.device);
 
               return (
                 <div
-                  key={`${scan.scanned_at}-${index}`}
-                  className="flex items-center justify-between gap-4 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3"
+                  key={scan.id || `${scan.scanned_at}-${index}`}
+                  className="grid gap-4 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-4 lg:grid-cols-[minmax(0,1fr)_auto_auto]"
                 >
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold text-white">
-                      Scan #{analytics.totalScans - index}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-white">
+                        Événement #{analytics.scansHistory.length - index}
+                      </p>
+                      <HistoryBadge
+                        isUniqueVisitor={scan.isUniqueVisitor}
+                        visitIndex={scan.visitIndex}
+                      />
                     </div>
-                    <div className="mt-1 text-xs text-white/45">
+
+                    <div className="mt-2 text-sm text-white/65">
                       {[scan.city, scan.country].filter(Boolean).join(", ") ||
                         "Localisation inconnue"}
                     </div>
                   </div>
 
-                  <div className="shrink-0 text-right">
+                  <div className="text-left lg:text-right">
                     <div className="text-xs uppercase tracking-[0.16em] text-white/35">
                       {getDeviceLabel(device)}
                     </div>
                     <div className="mt-1 text-xs font-semibold text-white/55">
                       {formatDate(scan.scanned_at)}
+                    </div>
+                  </div>
+
+                  <div className="text-left lg:text-right">
+                    <div className="text-xs uppercase tracking-[0.16em] text-white/35">
+                      Type
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-white">
+                      {scan.isUniqueVisitor === null
+                        ? "Indéterminé"
+                        : scan.isUniqueVisitor
+                        ? "Premier scan"
+                        : "Scan répété"}
                     </div>
                   </div>
                 </div>

@@ -35,6 +35,7 @@ type Props = {
 export default function QRDetailsView({ qrId }: Props) {
   const router = useRouter();
   const { qr, scans, loading, error, isDeleting, deleteQr } = useQrDetails(qrId);
+  
 
   const analytics = useMemo(() => buildQrAnalytics(scans), [scans]);
   const qrMode: "dynamic" | "static" = qr?.qr_mode === "static" ? "static" : "dynamic";
@@ -87,7 +88,7 @@ export default function QRDetailsView({ qrId }: Props) {
       ) : null}
 
       {isDynamic ? (
-        <QrDetailsAnalytics analytics={analytics} scans={scans} />
+        <QrDetailsAnalytics analytics={analytics} />
       ) : (
         <StaticTrackingNotice />
       )}
