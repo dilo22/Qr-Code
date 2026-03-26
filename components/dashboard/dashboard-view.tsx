@@ -3,7 +3,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {Eye,Clock,QrCode,BarChart3,Settings,Plus,} from "lucide-react";
+import {
+  Eye,
+  Clock,
+  QrCode,
+  BarChart3,
+  Settings,
+  Plus,
+  Search,
+  Trash2,
+  Filter,
+  ArrowUpDown,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import QRCodeStyling from "qr-code-styling";
 import { buildQrOptions } from "@/components/dashboard/qr-utils";
@@ -25,6 +36,8 @@ type QRScanItem = {
   qr_code_id: string;
   scanned_at: string;
 };
+
+type SortOption = "recent" | "oldest" | "name" | "scans";
 
 function getProjectDisplayName(project: QRCodeItem) {
   return project.name || project.title || "Sans titre";
@@ -64,7 +77,6 @@ function MiniQR({ project }: { project: QRCodeItem }) {
     };
 
     const options = buildQrOptions(value, design, 96);
-
     options.imageOptions = {
       ...options.imageOptions,
       margin: 2,
@@ -87,7 +99,13 @@ function MiniQR({ project }: { project: QRCodeItem }) {
   );
 }
 
-function Badge({ children, status }: { children: React.ReactNode; status: string }) {
+function Badge({
+  children,
+  status,
+}: {
+  children: React.ReactNode;
+  status: string;
+}) {
   const colors: Record<string, string> = {
     active: "bg-emerald-500/20 text-emerald-400",
     paused: "bg-amber-500/20 text-amber-400",
@@ -105,9 +123,21 @@ function Badge({ children, status }: { children: React.ReactNode; status: string
   );
 }
 
-function IconButton({ icon }: { icon: React.ReactNode }) {
+function IconButton({
+  icon,
+  danger = false,
+}: {
+  icon: React.ReactNode;
+  danger?: boolean;
+}) {
   return (
-    <div className="flex items-center justify-center rounded-xl p-3 text-white/40 transition-all duration-300 hover:bg-white/5 hover:text-white">
+    <div
+      className={`flex items-center justify-center rounded-xl p-3 transition-all duration-300 ${
+        danger
+          ? "text-red-400 hover:bg-red-500/10 hover:text-red-300"
+          : "text-white/40 hover:bg-white/5 hover:text-white"
+      }`}
+    >
       {icon}
     </div>
   );
@@ -137,6 +167,26 @@ export function DashboardView() {
   const [scans, setScans] = useState<QRScanItem[]>([]);
   const [profileName, setProfileName] = useState("Utilisateur");
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedType, setSelectedType] = useState("all");
+  const [sortBy, setSortBy] = useState<SortOption>("recent");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+
+      if (error || !session) {
+        router.push("/auth");
+      }
+    };
+
+    checkSession();
+  }, [router]);
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -148,26 +198,28 @@ export function DashboardView() {
 
         if (!user) return;
 
-        const [{ data: profile }, { data: qrCodes }, { data: qrScans }] = await Promise.all([
-          supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
-          supabase
-            .from("qr_codes")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("qr_scans")
-            .select("qr_code_id, scanned_at")
-            .order("scanned_at", { ascending: false }),
-        ]);
+        const [{ data: profile }, { data: qrCodes }, { data: qrScans }] =
+          await Promise.all([
+            supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+            supabase
+              .from("qr_codes")
+              .select("*")
+              .eq("user_id", user.id)
+              .order("created_at", { ascending: false }),
+            supabase
+              .from("qr_scans")
+              .select("qr_code_id, scanned_at")
+              .order("scanned_at", { ascending: false }),
+          ]);
 
         if (profile?.full_name) {
           setProfileName(profile.full_name);
         }
 
-        setProjects((qrCodes || []) as QRCodeItem[]);
+        const safeQrCodes = (qrCodes || []) as QRCodeItem[];
+        setProjects(safeQrCodes);
 
-        const userQrIds = new Set((qrCodes || []).map((q: any) => q.id));
+        const userQrIds = new Set(safeQrCodes.map((q) => q.id));
         setScans(((qrScans || []) as QRScanItem[]).filter((s) => userQrIds.has(s.qr_code_id)));
       } catch (error) {
         console.error("Erreur dashboard :", error);
@@ -185,6 +237,7 @@ export function DashboardView() {
 
     for (const scan of scans) {
       countMap.set(scan.qr_code_id, (countMap.get(scan.qr_code_id) || 0) + 1);
+
       if (!lastScanMap.has(scan.qr_code_id)) {
         lastScanMap.set(scan.qr_code_id, scan.scanned_at);
       }
@@ -192,6 +245,87 @@ export function DashboardView() {
 
     return { countMap, lastScanMap };
   }, [scans]);
+
+  const availableTypes = useMemo(() => {
+    const types = Array.from(new Set(projects.map((project) => project.type).filter(Boolean)));
+    return types.sort((a, b) => a.localeCompare(b));
+  }, [projects]);
+
+  const filteredProjects = useMemo(() => {
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+
+    const filtered = projects.filter((project) => {
+      const displayName = getProjectDisplayName(project).toLowerCase();
+      const type = (project.type || "").toLowerCase();
+
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        displayName.includes(normalizedSearch) ||
+        type.includes(normalizedSearch);
+
+      const matchesType =
+        selectedType === "all" || project.type.toLowerCase() === selectedType.toLowerCase();
+
+      return matchesSearch && matchesType;
+    });
+
+    return filtered.sort((a, b) => {
+      if (sortBy === "recent") {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+
+      if (sortBy === "oldest") {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+
+      if (sortBy === "name") {
+        return getProjectDisplayName(a).localeCompare(getProjectDisplayName(b));
+      }
+
+      if (sortBy === "scans") {
+        return (
+          (scansByProject.countMap.get(b.id) || 0) -
+          (scansByProject.countMap.get(a.id) || 0)
+        );
+      }
+
+      return 0;
+    });
+  }, [projects, searchQuery, selectedType, sortBy, scansByProject]);
+
+  const handleDelete = async (projectId: string, projectName: string) => {
+    const confirmed = window.confirm(
+      `Supprimer définitivement "${projectName}" ? Cette action est irréversible.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(projectId);
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) throw new Error("Utilisateur non connecté.");
+
+      const { error } = await supabase
+        .from("qr_codes")
+        .delete()
+        .eq("id", projectId)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      setProjects((prev) => prev.filter((project) => project.id !== projectId));
+      setScans((prev) => prev.filter((scan) => scan.qr_code_id !== projectId));
+    } catch (error) {
+      console.error("Erreur suppression QR code :", error);
+      window.alert("Impossible de supprimer ce QR code.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="animate-in space-y-10 fade-in duration-700">
@@ -209,16 +343,65 @@ export function DashboardView() {
           href="/dashboard/create"
           className="group flex items-center gap-3 rounded-2xl bg-cyan-500 px-8 py-4 text-xs font-black uppercase tracking-widest text-white shadow-xl shadow-cyan-500/20 transition-all duration-300 hover:scale-105 hover:bg-white"
         >
-          <Plus className="text-white transition-colors group-hover:text-cyan-500" size={16} strokeWidth={3} />
+          <Plus
+            className="text-white transition-colors group-hover:text-cyan-500"
+            size={16}
+            strokeWidth={3}
+          />
           <span className="transition-colors group-hover:text-cyan-500">
             Nouveau Projet
           </span>
         </Link>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 rounded-[2rem] border border-white/10 bg-white/[0.03] p-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative w-full lg:max-w-md">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Rechercher par nom ou type..."
+              className="w-full rounded-2xl border border-white/10 bg-black/30 py-3 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-cyan-500/40"
+            />
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="relative">
+              <Filter className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+              <select
+                value={selectedType}
+                onChange={(e) => setSelectedType(e.target.value)}
+                className="min-w-[180px] appearance-none rounded-2xl border border-white/10 bg-black/30 py-3 pl-11 pr-10 text-sm text-white outline-none transition focus:border-cyan-500/40"
+              >
+                <option value="all">Tous les types</option>
+                {availableTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative">
+              <ArrowUpDown className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="min-w-[180px] appearance-none rounded-2xl border border-white/10 bg-black/30 py-3 pl-11 pr-10 text-sm text-white outline-none transition focus:border-cyan-500/40"
+              >
+                <option value="recent">Plus récents</option>
+                <option value="oldest">Plus anciens</option>
+                <option value="name">Nom A → Z</option>
+                <option value="scans">Plus de scans</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <h3 className="text-lg font-black italic uppercase tracking-widest text-white/40">
-          Vos QR Codes ({projects.length})
+          Vos QR Codes ({filteredProjects.length})
         </h3>
 
         {loading ? (
@@ -233,10 +416,19 @@ export function DashboardView() {
               Aucun QR code créé pour le moment.
             </p>
           </div>
+        ) : filteredProjects.length === 0 ? (
+          <div className="flex flex-col items-center rounded-[2.5rem] border border-dashed border-white/5 bg-white/[0.02] p-12 text-center">
+            <QrCode className="mb-4 h-12 w-12 text-white/10" />
+            <p className="font-bold italic text-white/30">
+              Aucun résultat pour cette recherche.
+            </p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {projects.map((project) => {
+            {filteredProjects.map((project) => {
               const status = getProjectStatus(project);
+              const projectName = getProjectDisplayName(project);
+              const isDeleting = deletingId === project.id;
 
               return (
                 <div
@@ -257,7 +449,7 @@ export function DashboardView() {
                   <div className="min-w-0 flex-1">
                     <div className="mb-1 flex items-center gap-3">
                       <h4 className="truncate text-lg font-black italic uppercase">
-                        {getProjectDisplayName(project)}
+                        {projectName}
                       </h4>
                       <Badge status={status}>{status}</Badge>
                     </div>
@@ -293,6 +485,25 @@ export function DashboardView() {
                     >
                       <IconButton icon={<Settings size={18} />} />
                     </Link>
+
+                    <button
+                      type="button"
+                      disabled={isDeleting}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleDelete(project.id, projectName);
+                      }}
+                    >
+                      <IconButton
+                        danger
+                        icon={
+                          <Trash2
+                            size={18}
+                            className={isDeleting ? "animate-pulse" : ""}
+                          />
+                        }
+                      />
+                    </button>
                   </div>
                 </div>
               );

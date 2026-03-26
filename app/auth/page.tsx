@@ -8,7 +8,6 @@ import {
   Lock,
   User,
   ArrowRight,
-  Github,
   Chrome,
   ShieldCheck,
   Zap,
@@ -24,6 +23,7 @@ export default function AuthPage() {
   const [mode, setMode] = useState<AuthMode>("login");
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -31,7 +31,26 @@ export default function AuthPage() {
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  useEffect(() => {
+    const clearBrokenSession = async () => {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
 
+      if (error) {
+        console.error(error);
+        await supabase.auth.signOut();
+        return;
+      }
+
+      if (!session) {
+        return;
+      }
+    };
+
+    clearBrokenSession();
+  }, []);
   useEffect(() => {
     const handleMove = (e: MouseEvent) => {
       setMousePos({ x: e.clientX, y: e.clientY });
@@ -43,6 +62,28 @@ export default function AuthPage() {
 
   const handleBack = () => {
     router.push("/");
+  };
+
+  const handleGoogleAuth = async () => {
+    setError(null);
+    setSuccess(null);
+    setIsGoogleLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Connexion Google impossible."
+      );
+      setIsGoogleLoading(false);
+    }
   };
 
   const handleAuth = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -75,24 +116,24 @@ export default function AuthPage() {
           throw new Error(error.message);
         }
 
-        setSuccess("Compte créé avec succès. Vérifiez votre email puis connectez-vous.");
+        setSuccess(
+          "Compte créé avec succès. Vérifiez votre email puis connectez-vous."
+        );
         setMode("login");
         setPassword("");
         return;
       }
 
-      if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (error) {
-          throw new Error("Email ou mot de passe incorrect.");
-        }
-
-        router.push("/dashboard");
+      if (error) {
+        throw new Error("Email ou mot de passe incorrect.");
       }
+
+      router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue.");
     } finally {
@@ -113,13 +154,17 @@ export default function AuthPage() {
         <div
           className="absolute w-[600px] h-[600px] rounded-full bg-fuchsia-600/10 blur-[120px] transition-transform duration-1000 ease-out"
           style={{
-            transform: `translate(${mousePos.x / 15 - 300}px, ${mousePos.y / 15 - 300}px)`,
+            transform: `translate(${mousePos.x / 15 - 300}px, ${
+              mousePos.y / 15 - 300
+            }px)`,
           }}
         />
         <div
           className="absolute right-0 bottom-0 w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[120px] transition-transform duration-1000 ease-out"
           style={{
-            transform: `translate(${-mousePos.x / 20}px, ${-mousePos.y / 20}px)`,
+            transform: `translate(${-mousePos.x / 20}px, ${
+              -mousePos.y / 20
+            }px)`,
           }}
         />
       </div>
@@ -144,7 +189,8 @@ export default function AuthPage() {
             </h2>
 
             <p className="text-white/50 text-lg max-w-sm">
-              Connectez-vous pour gérer vos points d'accès dynamiques et analyser vos flux de données en temps réel.
+              Connectez-vous pour gérer vos points d'accès dynamiques et analyser
+              vos flux de données en temps réel.
             </p>
           </div>
 
@@ -195,19 +241,19 @@ export default function AuthPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-8">
+          <div className="grid grid-cols-1 gap-4 mb-8">
             <button
               type="button"
-              className="flex items-center justify-center gap-3 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all font-bold text-sm"
+              onClick={handleGoogleAuth}
+              disabled={isGoogleLoading}
+              className="flex items-center justify-center gap-3 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all font-bold text-sm disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <Chrome className="w-4 h-4" /> Google
-            </button>
-
-            <button
-              type="button"
-              className="flex items-center justify-center gap-3 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all font-bold text-sm"
-            >
-              <Github className="w-4 h-4" /> GitHub
+              {isGoogleLoading ? (
+                <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Chrome className="w-4 h-4" />
+              )}
+              Continuer avec Google
             </button>
           </div>
 

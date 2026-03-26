@@ -388,6 +388,20 @@ export function CreateQrForm({
               qrData={qrData}
               qrDesign={qrDesign}
               onBack={() => setStep("design")}
+              onCreateAnother={() => {
+                setSelectedType("url");
+                setStep("type");
+                setFurthestStep("type");
+                setQrData({});
+                setQrDesign({
+                  foreground: "#000000",
+                  background: "#ffffff",
+                  dotsStyle: "square",
+                  cornersStyle: "square",
+                });
+                setSaveError(null);
+                setSavedQrId(null);
+              }}
             />
           )}
 
