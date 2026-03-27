@@ -1,5 +1,6 @@
 "use client";
 
+import { supabase } from "@/lib/supabase/client";
 import { useState } from "react";
 import {
   ArrowRight,
@@ -62,9 +63,9 @@ function getTypeMeta(type: string) {
     linkedin: { icon: <Linkedin size={22} />, title: "LinkedIn", description: "Lien vers votre profil LinkedIn." },
     twitter: { icon: <Twitter size={22} />, title: "X / Twitter", description: "Lien vers votre profil X." },
     youtube: { icon: <Youtube size={22} />, title: "YouTube", description: "Lien vers votre chaîne ou vidéo." },
-    pdf: { icon: <File size={22} />, title: "PDF", description: "Lien vers un document PDF." },
-    image: { icon: <ImageIcon size={22} />, title: "Image", description: "Lien vers une image." },
-    audio: { icon: <Music2 size={22} />, title: "Audio", description: "Lien vers un audio." },
+    pdf: { icon: <File size={22} />, title: "PDF", description: "Importez un document PDF." },
+    image: { icon: <ImageIcon size={22} />, title: "Image", description: "Importez une image." },
+    audio: { icon: <Music2 size={22} />, title: "Audio", description: "Importez un fichier audio." },
     location: { icon: <MapPin size={22} />, title: "Localisation", description: "Adresse ou coordonnées GPS." },
     event: { icon: <CalendarDays size={22} />, title: "Événement", description: "Créez un QR pour un événement." },
     payment: { icon: <CreditCard size={22} />, title: "Paiement", description: "Préparez un paiement simple." },
@@ -77,6 +78,59 @@ function getTypeMeta(type: string) {
     icon: <FileText size={22} />,
     title: "Contenu",
     description: "Configurez votre QR code.",
+  };
+}
+
+function getAcceptedTypes(type: string) {
+  switch (type) {
+    case "pdf":
+      return "application/pdf";
+    case "image":
+      return "image/*";
+    case "audio":
+      return "audio/*";
+    default:
+      return "*/*";
+  }
+}
+
+function formatFileSize(size?: number) {
+  if (!size || Number.isNaN(size)) return "";
+  if (size < 1024) return `${size} o`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} Ko`;
+  if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} Mo`;
+  return `${(size / (1024 * 1024 * 1024)).toFixed(1)} Go`;
+}
+
+async function uploadQrFile(file: File, type: string) {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) throw userError;
+  if (!user) throw new Error("Utilisateur non connecté.");
+
+  const extension = file.name.includes(".") ? file.name.split(".").pop() : "";
+  const safeExt = extension ? `.${extension}` : "";
+  const filePath = `${user.id}/${crypto.randomUUID()}${safeExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("qr-files")
+    .upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (uploadError) throw uploadError;
+
+  return {
+    storagePath: filePath,
+    fileName: file.name,
+    mimeType: file.type,
+    size: file.size,
+    fileCategory: type,
+    kind: "hosted_file",
   };
 }
 
@@ -94,6 +148,8 @@ export default function CreateQrContent({
   initialData = {},
 }: Props) {
   const [form, setForm] = useState<Record<string, any>>(initialData);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleChange = (field: string, newValue: any) => {
     const updated = { ...form, [field]: newValue };
@@ -117,6 +173,63 @@ export default function CreateQrContent({
         className={inputClass}
       />
     </Field>
+  );
+
+  const renderHostedFileField = () => (
+    <div className="space-y-5">
+      <Field label="Fichier" icon={meta.icon}>
+        <input
+          type="file"
+          accept={getAcceptedTypes(type)}
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            setUploadError(null);
+            setIsUploading(true);
+
+            try {
+              const uploaded = await uploadQrFile(file, type);
+              const updated = {
+                ...form,
+                ...uploaded,
+              };
+
+              setForm(updated);
+              onLiveChange?.(updated);
+            } catch (error: any) {
+              console.error("UPLOAD FILE ERROR:", error);
+              setUploadError(error?.message || "Erreur lors de l’upload du fichier.");
+            } finally {
+              setIsUploading(false);
+            }
+          }}
+          className={inputClass}
+        />
+      </Field>
+
+      {isUploading && (
+        <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-300">
+          Upload du fichier en cours...
+        </div>
+      )}
+
+      {uploadError && (
+        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {uploadError}
+        </div>
+      )}
+
+      {form.fileName && (
+        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70">
+          <div className="font-medium text-white/90">{form.fileName}</div>
+          <div className="mt-1 text-xs text-white/45">
+            {form.mimeType || "Type inconnu"}
+            {form.size ? ` • ${formatFileSize(form.size)}` : ""}
+          </div>
+        </div>
+      )}
+    </div>
   );
 
   const renderFields = () => {
@@ -156,7 +269,10 @@ export default function CreateQrContent({
                     <option value="WEP">WEP</option>
                     <option value="nopass">Ouvert</option>
                   </select>
-                  <ChevronDown className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/40" size={16} />
+                  <ChevronDown
+                    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/40"
+                    size={16}
+                  />
                 </div>
               </Field>
             </div>
@@ -461,6 +577,11 @@ export default function CreateQrContent({
           </div>
         );
 
+      case "pdf":
+      case "image":
+      case "audio":
+        return renderHostedFileField();
+
       case "instagram":
       case "facebook":
       case "tiktok":
@@ -470,9 +591,6 @@ export default function CreateQrContent({
       case "app":
       case "menu":
       case "review":
-      case "pdf":
-      case "image":
-      case "audio":
       case "url":
         return renderUrlField();
 
@@ -529,7 +647,8 @@ export default function CreateQrContent({
 
         <button
           onClick={() => onNext(form)}
-          className="flex items-center justify-center gap-2.5 rounded-xl bg-white px-7 py-3 text-sm font-black text-black transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(255,255,255,0.14)]"
+          disabled={isUploading}
+          className="flex items-center justify-center gap-2.5 rounded-xl bg-white px-7 py-3 text-sm font-black text-black transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(255,255,255,0.14)] disabled:cursor-not-allowed disabled:opacity-60"
         >
           Continuer <ArrowRight size={16} />
         </button>

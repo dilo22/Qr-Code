@@ -27,9 +27,18 @@ function detectDevice(userAgent: string | null) {
   return "desktop";
 }
 
-function getRedirectUrl(qr: any) {
+function isHostedFileType(type: string) {
+  return ["pdf", "image", "audio", "video"].includes(type);
+}
+
+function getRedirectUrl(qr: any, request: NextRequest) {
   const parsedContent = parseContent(qr.content);
   if (!parsedContent) return null;
+
+  if (isHostedFileType(qr.type) && parsedContent.storagePath) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+    return `${appUrl.replace(/\/$/, "")}/view/${qr.id}`;
+  }
 
   return parsedContent.url || null;
 }
@@ -63,10 +72,10 @@ export async function GET(
     });
   }
 
-  const redirectUrl = getRedirectUrl(qr);
+  const redirectUrl = getRedirectUrl(qr, request);
 
   if (!redirectUrl) {
-    return new NextResponse("Aucune URL de redirection trouvée.", {
+    return new NextResponse("Aucune destination trouvée.", {
       status: 400,
     });
   }

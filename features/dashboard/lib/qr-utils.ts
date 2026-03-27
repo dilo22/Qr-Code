@@ -44,10 +44,13 @@ export function buildQrValue(type: string, qrData: Record<string, any>) {
     case "app":
     case "review":
     case "menu":
+      return cleanUrl(qrData.url);
+
     case "pdf":
     case "image":
     case "audio":
-      return cleanUrl(qrData.url);
+    case "video":
+      return clean(qrData.fileName || qrData.name || "Fichier hébergé");
 
     case "wifi":
       return `WIFI:T:${qrData.encryption || "WPA"};S:${clean(qrData.ssid)};P:${clean(
@@ -150,7 +153,10 @@ export function buildQrValue(type: string, qrData: Record<string, any>) {
 /**
  * Calcule une marge de sécurité.
  */
-export function getSafeMargin(design: Partial<QrDesignData>, size: number = QR_RENDER_SIZE) {
+export function getSafeMargin(
+  design: Partial<QrDesignData>,
+  size: number = QR_RENDER_SIZE
+) {
   const raw = Number.isFinite(design.margin) ? Number(design.margin) : 20;
   const clamped = Math.max(4, Math.min(raw, 100));
 
