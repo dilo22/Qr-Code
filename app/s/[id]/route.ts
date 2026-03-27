@@ -18,6 +18,22 @@ function normalizeUrl(url: string | null | undefined) {
   return `https://${value}`;
 }
 
+function parsePayload(value: unknown) {
+  if (!value) return {};
+
+  if (typeof value === "object") return value as Record<string, any>;
+
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return {};
+    }
+  }
+
+  return {};
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -47,28 +63,12 @@ export async function GET(
 
   console.log("QR row:", row);
 
-  function parsePayload(value: unknown) {
-  if (!value) return {};
-
-  if (typeof value === "object") return value as Record<string, any>;
-
-  if (typeof value === "string") {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return {};
-    }
-  }
-
-  return {};
-}
-
-const payload = parsePayload(
-  row.qr_data ??
-  row.content ??
-  row.payload ??
-  row.data
-);
+  const payload = parsePayload(
+    row.qr_data ??
+    row.content ??
+    row.payload ??
+    row.data
+  );
 
   const baseUrl = new URL(request.url).origin;
 
@@ -90,10 +90,7 @@ const payload = parsePayload(
     case "twitter":
     case "youtube":
     case "app":
-    case "review":
-    case "file":
-    case "pdf":
-    case "image": {
+    case "review": {
       const destination = normalizeUrl(url);
 
       if (!destination) {
@@ -114,6 +111,14 @@ const payload = parsePayload(
       }
 
       return NextResponse.redirect(destination);
+    }
+
+    case "file":
+    case "pdf":
+    case "image":
+    case "audio":
+    case "video": {
+      return NextResponse.redirect(`${baseUrl}/view/${row.id}`);
     }
 
     case "menu": {
