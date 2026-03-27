@@ -47,10 +47,15 @@ export function buildQrValue(type: string, qrData: Record<string, any>) {
       return cleanUrl(qrData.url);
 
     case "pdf":
-    case "image":
-    case "audio":
-    case "video":
-      return clean(qrData.fileName || qrData.name || "Fichier hébergé");
+case "image":
+case "audio":
+case "video":
+  return cleanUrl(
+    qrData.url ||
+    qrData.fileUrl ||
+    qrData.publicUrl ||
+    qrData.hostedUrl
+  );
 
     case "vcard":
       return clean(

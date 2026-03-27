@@ -502,6 +502,7 @@ export function CreateQrForm({
             <CreateQrExport
               type={selectedType}
               qrData={qrData}
+              qrValue={qrValue}
               qrDesign={qrDesign}
               onBack={() => setStep("design")}
               onCreateAnother={() => {

@@ -18,6 +18,7 @@ import { buildQrOptions, buildQrValue, QR_RENDER_SIZE } from "@/features/dashboa
 type Props = {
   type: string;
   qrData: Record<string, any>;
+  qrValue: string;
   qrDesign: Partial<QrDesignData>;
   onBack: () => void;
   onCreateAnother: () => void;
@@ -28,6 +29,7 @@ type DownloadFormat = "png" | "jpeg" | "webp" | "svg";
 export default function CreateQrExport({
   type,
   qrData,
+  qrValue,
   qrDesign,
   onBack,
   onCreateAnother,
@@ -37,7 +39,6 @@ export default function CreateQrExport({
   const [downloadedFormat, setDownloadedFormat] =
     useState<DownloadFormat | null>(null);
 
-  const qrValue = useMemo(() => buildQrValue(type, qrData), [type, qrData]);
 
   const handleDownload = async (extension: DownloadFormat) => {
     setIsDownloading(extension);
