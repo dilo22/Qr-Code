@@ -242,3 +242,22 @@ select.qr-input option {
 .animate-scan {
   animation: scan 4s ease-in-out infinite;
 }
+
+@keyframes scanY {
+  0% {
+    transform: translateY(0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(260px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 0.2;
+  }
+}
+
+.animate-scanY {
+  animation: scanY 3.5s ease-in-out infinite;
+}
