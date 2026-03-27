@@ -1,7 +1,8 @@
 "use client";
 
+import LocationPicker from "@/features/dashboard/create/components/LocationPicker";
 import { supabase } from "@/lib/supabase/client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowRight,
   Link as LinkIcon,
@@ -50,6 +51,44 @@ type Props = {
   initialData?: Record<string, any>;
 };
 
+type MenuItem = {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  imagePath?: string;
+  imageFileName?: string;
+  imageMimeType?: string;
+  imageSize?: number;
+  order: number;
+};
+
+type MenuSection = {
+  id: string;
+  title: string;
+  description: string;
+  order: number;
+  items: MenuItem[];
+};
+
+type MenuRestaurant = {
+  name: string;
+  bio: string;
+  phone: string;
+  website: string;
+  address: string;
+  coverImagePath?: string;
+  coverImageFileName?: string;
+  coverImageMimeType?: string;
+  coverImageSize?: number;
+};
+
+type MenuData = {
+  restaurant: MenuRestaurant;
+  featuredItems: MenuItem[];
+  sections: MenuSection[];
+};
+
 function getTypeMeta(type: string) {
   const metas: Record<string, any> = {
     url: { icon: <LinkIcon size={22} />, title: "Lien web", description: "Redirigez vers une URL." },
@@ -81,7 +120,11 @@ function getTypeMeta(type: string) {
     event: { icon: <CalendarDays size={22} />, title: "Événement", description: "Créez un QR pour un événement." },
     payment: { icon: <CreditCard size={22} />, title: "Paiement", description: "Préparez un paiement simple." },
     app: { icon: <Smartphone size={22} />, title: "Application", description: "Lien vers une application ou un store." },
-    menu: { icon: <UtensilsCrossed size={22} />, title: "Menu", description: "Partagez votre menu en ligne." },
+    menu: {
+      icon: <UtensilsCrossed size={22} />,
+      title: "Menu",
+      description: "Créez une page menu dynamique avec restaurant, sections et plats.",
+    },
     review: { icon: <Star size={22} />, title: "Avis", description: "Lien vers votre page d’avis." },
   };
 
@@ -101,6 +144,8 @@ function getAcceptedTypes(type: string) {
     case "audio":
       return "audio/*";
     case "vcard":
+      return "image/*";
+    case "menu":
       return "image/*";
     default:
       return "*/*";
@@ -128,12 +173,10 @@ async function uploadQrFile(file: File, type: string) {
   const safeExt = extension ? `.${extension}` : "";
   const filePath = `${user.id}/${crypto.randomUUID()}${safeExt}`;
 
-  const { error: uploadError } = await supabase.storage
-    .from("qr-files")
-    .upload(filePath, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
+  const { error: uploadError } = await supabase.storage.from("qr-files").upload(filePath, file, {
+    cacheControl: "3600",
+    upsert: false,
+  });
 
   if (uploadError) throw uploadError;
 
@@ -153,6 +196,64 @@ const inputClass =
 const textareaClass = `${inputClass} min-h-[120px] resize-y leading-6`;
 const nativeInputClass = `${inputClass} appearance-none`;
 
+function createMenuItem(order = 0): MenuItem {
+  return {
+    id: crypto.randomUUID(),
+    name: "",
+    description: "",
+    price: "",
+    imagePath: "",
+    imageFileName: "",
+    imageMimeType: "",
+    imageSize: undefined,
+    order,
+  };
+}
+
+function createMenuSection(order = 0): MenuSection {
+  return {
+    id: crypto.randomUUID(),
+    title: "",
+    description: "",
+    order,
+    items: [],
+  };
+}
+
+function createEmptyMenuData(): MenuData {
+  return {
+    restaurant: {
+      name: "",
+      bio: "",
+      phone: "",
+      website: "",
+      address: "",
+      coverImagePath: "",
+      coverImageFileName: "",
+      coverImageMimeType: "",
+      coverImageSize: undefined,
+    },
+    featuredItems: [],
+    sections: [],
+  };
+}
+
+function normalizeInitialForm(initialData: Record<string, any>) {
+  const normalized = {
+    links: [],
+    ...initialData,
+  };
+
+  if (normalized.menuData) {
+    return normalized;
+  }
+
+  return {
+    ...normalized,
+    menuData: createEmptyMenuData(),
+  };
+}
+
 export default function CreateQrContent({
   type,
   onNext,
@@ -160,23 +261,31 @@ export default function CreateQrContent({
   onLiveChange,
   initialData = {},
 }: Props) {
-  const [form, setForm] = useState<Record<string, any>>({
-    links: [],
-    ...initialData,
-  });
+  const [form, setForm] = useState<Record<string, any>>(normalizeInitialForm(initialData));
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const handleChange = (field: string, newValue: any) => {
-    const updated = { ...form, [field]: newValue };
+  const handleFormUpdate = (updated: Record<string, any>) => {
     setForm(updated);
     onLiveChange?.(updated);
   };
 
+  const handleChange = (field: string, newValue: any) => {
+    const updated = { ...form, [field]: newValue };
+    handleFormUpdate(updated);
+  };
+
   const handleLinksChange = (nextLinks: Array<{ label: string; url: string }>) => {
     const updated = { ...form, links: nextLinks };
-    setForm(updated);
-    onLiveChange?.(updated);
+    handleFormUpdate(updated);
+  };
+
+  const handleMenuDataChange = (nextMenuData: MenuData) => {
+    const updated = {
+      ...form,
+      menuData: nextMenuData,
+    };
+    handleFormUpdate(updated);
   };
 
   const addLinkItem = () => {
@@ -236,8 +345,7 @@ export default function CreateQrContent({
                 ...uploaded,
               };
 
-              setForm(updated);
-              onLiveChange?.(updated);
+              handleFormUpdate(updated);
             } catch (error: any) {
               console.error("UPLOAD FILE ERROR:", error);
               setUploadError(error?.message || "Erreur lors de l’upload du fichier.");
@@ -296,8 +404,7 @@ export default function CreateQrContent({
                 avatarSize: uploaded.size,
               };
 
-              setForm(updated);
-              onLiveChange?.(updated);
+              handleFormUpdate(updated);
             } catch (error: any) {
               console.error("UPLOAD AVATAR ERROR:", error);
               setUploadError(error?.message || "Erreur lors de l’upload de l’image.");
@@ -357,10 +464,7 @@ export default function CreateQrContent({
       )}
 
       {(form.links || []).map((link: { label: string; url: string }, index: number) => (
-        <div
-          key={index}
-          className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
-        >
+        <div key={index} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1.4fr_auto]">
             <Field label="Label" icon={<Hash size={14} />}>
               <input
@@ -560,8 +664,8 @@ export default function CreateQrContent({
                 <input
                   type="text"
                   placeholder="Ex: Sophie Martin"
-                  value={form.displayName  || ""}
-                  onChange={(e) => handleChange("name", e.target.value)}
+                  value={form.displayName ?? ""}
+                  onChange={(e) => handleChange("displayName", e.target.value)}
                   className={inputClass}
                 />
               </Field>
@@ -733,37 +837,24 @@ export default function CreateQrContent({
       case "location":
         return (
           <div className="space-y-5">
-            <Field label="Adresse ou lieu" icon={<MapPin size={14} />}>
-              <input
-                type="text"
-                placeholder="10 rue de Paris, Lyon"
-                value={form.address || ""}
-                onChange={(e) => handleChange("address", e.target.value)}
-                className={inputClass}
+            <Field label="Localisation" icon={<MapPin size={14} />}>
+              <LocationPicker
+                value={{
+                  address: form.address,
+                  latitude: form.latitude,
+                  longitude: form.longitude,
+                }}
+                onChange={({ address, latitude, longitude }) => {
+                  const updated = {
+                    ...form,
+                    address,
+                    latitude,
+                    longitude,
+                  };
+                  handleFormUpdate(updated);
+                }}
               />
             </Field>
-
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <Field label="Latitude" icon={<MapPinned size={14} />}>
-                <input
-                  type="text"
-                  placeholder="48.8566"
-                  value={form.latitude || ""}
-                  onChange={(e) => handleChange("latitude", e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
-
-              <Field label="Longitude" icon={<MapPinned size={14} />}>
-                <input
-                  type="text"
-                  placeholder="2.3522"
-                  value={form.longitude || ""}
-                  onChange={(e) => handleChange("longitude", e.target.value)}
-                  className={inputClass}
-                />
-              </Field>
-            </div>
           </div>
         );
 
@@ -854,6 +945,18 @@ export default function CreateQrContent({
       case "audio":
         return renderHostedFileField();
 
+      case "menu":
+        return (
+          <MenuEditor
+            value={form.menuData || createEmptyMenuData()}
+            onChange={handleMenuDataChange}
+            isUploading={isUploading}
+            setIsUploading={setIsUploading}
+            uploadError={uploadError}
+            setUploadError={setUploadError}
+          />
+        );
+
       case "instagram":
       case "facebook":
       case "tiktok":
@@ -861,7 +964,6 @@ export default function CreateQrContent({
       case "twitter":
       case "youtube":
       case "app":
-      case "menu":
       case "review":
       case "url":
         return renderUrlField();
@@ -883,12 +985,8 @@ export default function CreateQrContent({
             <span className="mb-2 inline-block rounded-full bg-cyan-400/10 px-2.5 py-1 text-[9px] font-black tracking-[0.16em] text-cyan-400">
               QR CONTENT
             </span>
-            <h1 className="text-2xl font-black leading-none text-white md:text-4xl">
-              {meta.title}
-            </h1>
-            <p className="mt-2 max-w-xl text-xs leading-5 text-white/45 md:text-sm">
-              {meta.description}
-            </p>
+            <h1 className="text-2xl font-black leading-none text-white md:text-4xl">{meta.title}</h1>
+            <p className="mt-2 max-w-xl text-xs leading-5 text-white/45 md:text-sm">{meta.description}</p>
           </div>
         </div>
 
@@ -896,9 +994,9 @@ export default function CreateQrContent({
           <Field label="Nom du projet" icon={<FileText size={14} />}>
             <input
               type="text"
-              placeholder="Ex: Menu restaurant, WiFi bureau..."
-              value={form.projectName || ""}
-              onChange={(e) => handleChange("name", e.target.value)}
+              placeholder="Ex: Carte Sophie, Profil RH, Portfolio..."
+              value={form.projectName ?? ""}
+              onChange={(e) => handleChange("projectName", e.target.value)}
               className={`${inputClass} border-dashed`}
             />
           </Field>
@@ -924,6 +1022,544 @@ export default function CreateQrContent({
         >
           Continuer <ArrowRight size={16} />
         </button>
+      </div>
+    </div>
+  );
+}
+
+function MenuEditor({
+  value,
+  onChange,
+  isUploading,
+  setIsUploading,
+  uploadError,
+  setUploadError,
+}: {
+  value: MenuData;
+  onChange: (next: MenuData) => void;
+  isUploading: boolean;
+  setIsUploading: (value: boolean) => void;
+  uploadError: string | null;
+  setUploadError: (value: string | null) => void;
+}) {
+  const menuData = useMemo(() => value || createEmptyMenuData(), [value]);
+
+  const updateRestaurantField = (field: keyof MenuRestaurant, newValue: any) => {
+    onChange({
+      ...menuData,
+      restaurant: {
+        ...menuData.restaurant,
+        [field]: newValue,
+      },
+    });
+  };
+
+  const uploadRestaurantCover = async (file: File) => {
+    setUploadError(null);
+    setIsUploading(true);
+
+    try {
+      const uploaded = await uploadQrFile(file, "menu");
+      onChange({
+        ...menuData,
+        restaurant: {
+          ...menuData.restaurant,
+          coverImagePath: uploaded.storagePath,
+          coverImageFileName: uploaded.fileName,
+          coverImageMimeType: uploaded.mimeType,
+          coverImageSize: uploaded.size,
+        },
+      });
+    } catch (error: any) {
+      console.error("UPLOAD MENU COVER ERROR:", error);
+      setUploadError(error?.message || "Erreur lors de l’upload de l’image du restaurant.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const addFeaturedItem = () => {
+    onChange({
+      ...menuData,
+      featuredItems: [...menuData.featuredItems, createMenuItem(menuData.featuredItems.length)],
+    });
+  };
+
+  const updateFeaturedItem = (itemId: string, patch: Partial<MenuItem>) => {
+    onChange({
+      ...menuData,
+      featuredItems: menuData.featuredItems.map((item) =>
+        item.id === itemId ? { ...item, ...patch } : item
+      ),
+    });
+  };
+
+  const removeFeaturedItem = (itemId: string) => {
+    onChange({
+      ...menuData,
+      featuredItems: menuData.featuredItems.filter((item) => item.id !== itemId),
+    });
+  };
+
+  const addSection = () => {
+    onChange({
+      ...menuData,
+      sections: [...menuData.sections, createMenuSection(menuData.sections.length)],
+    });
+  };
+
+  const updateSection = (sectionId: string, patch: Partial<MenuSection>) => {
+    onChange({
+      ...menuData,
+      sections: menuData.sections.map((section) =>
+        section.id === sectionId ? { ...section, ...patch } : section
+      ),
+    });
+  };
+
+  const removeSection = (sectionId: string) => {
+    onChange({
+      ...menuData,
+      sections: menuData.sections.filter((section) => section.id !== sectionId),
+    });
+  };
+
+  const addItemToSection = (sectionId: string) => {
+    onChange({
+      ...menuData,
+      sections: menuData.sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              items: [...section.items, createMenuItem(section.items.length)],
+            }
+          : section
+      ),
+    });
+  };
+
+  const updateSectionItem = (sectionId: string, itemId: string, patch: Partial<MenuItem>) => {
+    onChange({
+      ...menuData,
+      sections: menuData.sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              items: section.items.map((item) => (item.id === itemId ? { ...item, ...patch } : item)),
+            }
+          : section
+      ),
+    });
+  };
+
+  const removeSectionItem = (sectionId: string, itemId: string) => {
+    onChange({
+      ...menuData,
+      sections: menuData.sections.map((section) =>
+        section.id === sectionId
+          ? {
+              ...section,
+              items: section.items.filter((item) => item.id !== itemId),
+            }
+          : section
+      ),
+    });
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 md:p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <Building2 size={16} className="text-cyan-400" />
+          <h3 className="text-sm font-black uppercase tracking-[0.12em] text-white/70">
+            Restaurant
+          </h3>
+        </div>
+
+        <div className="space-y-5">
+          <Field label="Photo principale / couverture" icon={<ImageIcon size={14} />}>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                await uploadRestaurantCover(file);
+              }}
+              className={inputClass}
+            />
+          </Field>
+
+          {isUploading && (
+            <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-300">
+              Upload de l’image en cours...
+            </div>
+          )}
+
+          {uploadError && (
+            <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+              {uploadError}
+            </div>
+          )}
+
+          {menuData.restaurant.coverImageFileName && (
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70">
+              <div className="font-medium text-white/90">{menuData.restaurant.coverImageFileName}</div>
+              <div className="mt-1 text-xs text-white/45">
+                {menuData.restaurant.coverImageMimeType || "Type inconnu"}
+                {menuData.restaurant.coverImageSize
+                  ? ` • ${formatFileSize(menuData.restaurant.coverImageSize)}`
+                  : ""}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <Field label="Nom du restaurant" icon={<UtensilsCrossed size={14} />}>
+              <input
+                type="text"
+                placeholder="Ex: Le Palmier"
+                value={menuData.restaurant.name}
+                onChange={(e) => updateRestaurantField("name", e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+
+            <Field label="Téléphone" icon={<Phone size={14} />}>
+              <input
+                type="text"
+                placeholder="+33 6 12 34 56 78"
+                value={menuData.restaurant.phone}
+                onChange={(e) => updateRestaurantField("phone", e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+          </div>
+
+          <Field label="Bio / description" icon={<FileText size={14} />}>
+            <textarea
+              rows={4}
+              placeholder="Cuisine maison, brunch, spécialités..."
+              value={menuData.restaurant.bio}
+              onChange={(e) => updateRestaurantField("bio", e.target.value)}
+              className={textareaClass}
+            />
+          </Field>
+
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <Field label="Site web" icon={<Globe size={14} />}>
+              <input
+                type="text"
+                placeholder="https://monresto.com"
+                value={menuData.restaurant.website}
+                onChange={(e) => updateRestaurantField("website", e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+
+            <Field label="Adresse" icon={<MapPinned size={14} />}>
+              <input
+                type="text"
+                placeholder="10 rue de Paris, Lyon"
+                value={menuData.restaurant.address}
+                onChange={(e) => updateRestaurantField("address", e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 md:p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Star size={16} className="text-cyan-400" />
+            <h3 className="text-sm font-black uppercase tracking-[0.12em] text-white/70">
+              Plats mis en avant
+            </h3>
+          </div>
+
+          <button
+            type="button"
+            onClick={addFeaturedItem}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-bold text-white transition hover:bg-white/[0.08]"
+          >
+            <Plus size={14} />
+            Ajouter un plat
+          </button>
+        </div>
+
+        {menuData.featuredItems.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.03] px-4 py-4 text-sm text-white/45">
+            Aucun plat mis en avant pour le moment.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {menuData.featuredItems.map((item, index) => (
+              <MenuItemCard
+                key={item.id}
+                item={item}
+                index={index}
+                titlePrefix="Plat"
+                isUploading={isUploading}
+                setIsUploading={setIsUploading}
+                setUploadError={setUploadError}
+                onChange={(patch) => updateFeaturedItem(item.id, patch)}
+                onDelete={() => removeFeaturedItem(item.id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 md:p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <UtensilsCrossed size={16} className="text-cyan-400" />
+            <h3 className="text-sm font-black uppercase tracking-[0.12em] text-white/70">
+              Sections / blocs
+            </h3>
+          </div>
+
+          <button
+            type="button"
+            onClick={addSection}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-bold text-white transition hover:bg-white/[0.08]"
+          >
+            <Plus size={14} />
+            Ajouter une section
+          </button>
+        </div>
+
+        {menuData.sections.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.03] px-4 py-4 text-sm text-white/45">
+            Aucune section ajoutée pour le moment.
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {menuData.sections.map((section, sectionIndex) => (
+              <div key={section.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 md:p-5">
+                <div className="mb-4 flex items-start justify-between gap-4">
+                  <div className="w-full">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <Field label={`Titre du bloc ${sectionIndex + 1}`} icon={<Hash size={14} />}>
+                        <input
+                          type="text"
+                          placeholder="Ex: Petit déjeuner"
+                          value={section.title}
+                          onChange={(e) => updateSection(section.id, { title: e.target.value })}
+                          className={inputClass}
+                        />
+                      </Field>
+
+                      <Field label="Ordre" icon={<Hash size={14} />}>
+                        <input
+                          type="number"
+                          placeholder="0"
+                          value={section.order}
+                          onChange={(e) =>
+                            updateSection(section.id, {
+                              order: Number(e.target.value || 0),
+                            })
+                          }
+                          className={inputClass}
+                        />
+                      </Field>
+                    </div>
+
+                    <div className="mt-4">
+                      <Field label="Description du bloc" icon={<FileText size={14} />}>
+                        <textarea
+                          rows={3}
+                          placeholder="Ex: Disponible jusqu’à 11h30"
+                          value={section.description}
+                          onChange={(e) => updateSection(section.id, { description: e.target.value })}
+                          className={textareaClass}
+                        />
+                      </Field>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => removeSection(section.id)}
+                    className="inline-flex h-[46px] shrink-0 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 px-4 text-red-300 transition hover:bg-red-500/20"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="text-xs font-bold uppercase tracking-[0.1em] text-white/45">
+                    Plats du bloc
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => addItemToSection(section.id)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-bold text-white transition hover:bg-white/[0.08]"
+                  >
+                    <Plus size={14} />
+                    Ajouter un plat
+                  </button>
+                </div>
+
+                {section.items.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.03] px-4 py-4 text-sm text-white/45">
+                    Aucun plat dans ce bloc.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {section.items.map((item, itemIndex) => (
+                      <MenuItemCard
+                        key={item.id}
+                        item={item}
+                        index={itemIndex}
+                        titlePrefix="Plat"
+                        isUploading={isUploading}
+                        setIsUploading={setIsUploading}
+                        setUploadError={setUploadError}
+                        onChange={(patch) => updateSectionItem(section.id, item.id, patch)}
+                        onDelete={() => removeSectionItem(section.id, item.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MenuItemCard({
+  item,
+  index,
+  titlePrefix,
+  onChange,
+  onDelete,
+  isUploading,
+  setIsUploading,
+  setUploadError,
+}: {
+  item: MenuItem;
+  index: number;
+  titlePrefix: string;
+  onChange: (patch: Partial<MenuItem>) => void;
+  onDelete: () => void;
+  isUploading: boolean;
+  setIsUploading: (value: boolean) => void;
+  setUploadError: (value: string | null) => void;
+}) {
+  const uploadItemImage = async (file: File) => {
+    setUploadError(null);
+    setIsUploading(true);
+
+    try {
+      const uploaded = await uploadQrFile(file, "menu");
+      onChange({
+        imagePath: uploaded.storagePath,
+        imageFileName: uploaded.fileName,
+        imageMimeType: uploaded.mimeType,
+        imageSize: uploaded.size,
+      });
+    } catch (error: any) {
+      console.error("UPLOAD MENU ITEM IMAGE ERROR:", error);
+      setUploadError(error?.message || "Erreur lors de l’upload de l’image du plat.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="text-sm font-bold text-white/85">
+          {titlePrefix} {index + 1}
+        </div>
+
+        <button
+          type="button"
+          onClick={onDelete}
+          className="inline-flex h-[42px] items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 px-4 text-red-300 transition hover:bg-red-500/20"
+        >
+          <Trash2 size={16} />
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        <Field label="Photo du plat (facultatif)" icon={<ImageIcon size={14} />}>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              await uploadItemImage(file);
+            }}
+            className={inputClass}
+          />
+        </Field>
+
+        {isUploading && (
+          <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-300">
+            Upload de l’image en cours...
+          </div>
+        )}
+
+        {item.imageFileName && (
+          <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70">
+            <div className="font-medium text-white/90">{item.imageFileName}</div>
+            <div className="mt-1 text-xs text-white/45">
+              {item.imageMimeType || "Type inconnu"}
+              {item.imageSize ? ` • ${formatFileSize(item.imageSize)}` : ""}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Field label="Nom du plat" icon={<UtensilsCrossed size={14} />}>
+            <input
+              type="text"
+              placeholder="Ex: Burger du chef"
+              value={item.name}
+              onChange={(e) => onChange({ name: e.target.value })}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="Prix" icon={<Wallet size={14} />}>
+            <input
+              type="text"
+              placeholder="Ex: 14.90"
+              value={item.price}
+              onChange={(e) => onChange({ price: e.target.value })}
+              className={inputClass}
+            />
+          </Field>
+        </div>
+
+        <Field label="Description" icon={<FileText size={14} />}>
+          <textarea
+            rows={3}
+            placeholder="Décrivez le plat..."
+            value={item.description}
+            onChange={(e) => onChange({ description: e.target.value })}
+            className={textareaClass}
+          />
+        </Field>
+
+        <Field label="Ordre" icon={<Hash size={14} />}>
+          <input
+            type="number"
+            placeholder="0"
+            value={item.order}
+            onChange={(e) => onChange({ order: Number(e.target.value || 0) })}
+            className={inputClass}
+          />
+        </Field>
       </div>
     </div>
   );

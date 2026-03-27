@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AutoLogout } from "@/features/auth/components/AutoLogout";
+import "leaflet/dist/leaflet.css";
 
 export const metadata: Metadata = {
   title: "MyQR",

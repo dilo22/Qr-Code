@@ -2,6 +2,9 @@ qrcode/
 ├── app/
 │   ├── auth/
 │   │   └── page.tsx
+|   |___card/
+|   |   |__ [id]/
+|   |       |__ page.tsx
 │   ├── dashboard/
 │   │   ├── create/
 │   │   │   └── page.tsx
@@ -14,9 +17,15 @@ qrcode/
 │   │   │   └── page.tsx
 │   │   ├── layout.tsx
 │   │   └── page.tsx
+|   |menu/
+|   |   |__ [id]/
+|   |       |__ page.tsx
 │   ├── s/
 │   │   └── [id]/
 │   │       └── route.ts
+|   |view/
+|   |   |__ [id]/
+|   |       |__ page.tsx
 │   ├── favicon.ico
 │   ├── globals.css
 │   ├── layout.tsx
