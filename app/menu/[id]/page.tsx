@@ -147,8 +147,8 @@ export default async function MenuPage({ params }: Props) {
               )}
 
               {/* Floating content */}
-              <div className="absolute inset-x-0 bottom-0 translate-y-1/2 flex justify-center px-5 md:px-8 z-20">
-  <div className="w-full max-w-2xl rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.16),rgba(255,255,255,0.06))] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-xl md:p-7">
+              <div className="absolute inset-x-0 bottom-0 translate-y-[52%] md:translate-y-1/2 flex justify-center px-5 md:px-8 z-20">
+                <div className="w-full max-w-2xl rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.16),rgba(255,255,255,0.06))] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-xl md:p-7">
                   <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
                     <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.8)]" />
                     Menu digital
@@ -193,7 +193,7 @@ export default async function MenuPage({ params }: Props) {
               </div>
             </div>
 
-            <div className="px-5 pt-32 pb-8 md:px-8 md:pt-40 md:pb-10">
+            <div className="px-5 pt-[18rem] pb-8 md:px-8 md:pt-40 md:pb-10">
               {/* FEATURED */}
               {featuredItemsWithImages.length > 0 && (
                 <section className="mb-14">

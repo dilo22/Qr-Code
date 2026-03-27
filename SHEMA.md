@@ -2,9 +2,9 @@ qrcode/
 ├── app/
 │   ├── auth/
 │   │   └── page.tsx
-|   |___card/
-|   |   |__ [id]/
-|   |       |__ page.tsx
+│   ├── card/
+│   │   └── [id]/
+│   │       └── page.tsx
 │   ├── dashboard/
 │   │   ├── create/
 │   │   │   └── page.tsx
@@ -17,15 +17,15 @@ qrcode/
 │   │   │   └── page.tsx
 │   │   ├── layout.tsx
 │   │   └── page.tsx
-|   |menu/
-|   |   |__ [id]/
-|   |       |__ page.tsx
+│   ├── menu/
+│   │   └── [id]/
+│   │       └── page.tsx
 │   ├── s/
 │   │   └── [id]/
 │   │       └── route.ts
-|   |view/
-|   |   |__ [id]/
-|   |       |__ page.tsx
+│   ├── view/
+│   │   └── [id]/
+│   │       └── page.tsx
 │   ├── favicon.ico
 │   ├── globals.css
 │   ├── layout.tsx
@@ -35,9 +35,9 @@ qrcode/
 │   ├── auth/
 │   │   ├── components/
 │   │   │   └── AutoLogout.tsx
-│   │   ├── hooks/
-│   │   │   └── useAuthUser.ts
-│   │   └── index.ts
+│   │   └── hooks/
+│   │       └── useAuthUser.ts
+│   │   
 │   │
 │   ├── dashboard/
 │   │   ├── components/
@@ -63,11 +63,49 @@ qrcode/
 │   │   │   ├── settings-form.tsx
 │   │   │   ├── sidebar.tsx
 │   │   │   └── styled-qr-preview.tsx
+│   │   │
 │   │   ├── create/
 │   │   │   ├── CreateQRContent.tsx
 │   │   │   ├── CreateQRDesign.tsx
 │   │   │   ├── CreateQRExport.tsx
-│   │   │   └── CreateQRForm.tsx
+│   │   │   ├── CreateQRForm.tsx
+│   │   │   ├── index.ts
+│   │   │   │
+│   │   │   ├── components/
+│   │   │   │   ├── Field.tsx
+│   │   │   │   ├── HostedFileField.tsx
+│   │   │   │   ├── AvatarUploadField.tsx
+│   │   │   │   ├── LinksEditor.tsx
+│   │   │   │   ├── LocationPicker.tsx
+│   │   │   │   │
+│   │   │   │   ├── forms/
+│   │   │   │   │   ├── UrlForm.tsx
+│   │   │   │   │   ├── WifiForm.tsx
+│   │   │   │   │   ├── TextForm.tsx
+│   │   │   │   │   ├── ContactForm.tsx
+│   │   │   │   │   ├── VCardForm.tsx
+│   │   │   │   │   ├── EmailForm.tsx
+│   │   │   │   │   ├── SmsForm.tsx
+│   │   │   │   │   ├── PhoneForm.tsx
+│   │   │   │   │   ├── LocationForm.tsx
+│   │   │   │   │   ├── EventForm.tsx
+│   │   │   │   │   ├── PaymentForm.tsx
+│   │   │   │   │   ├── FileForm.tsx
+│   │   │   │   │   └── MenuForm.tsx
+│   │   │   │   │
+│   │   │   │   └── menu/
+│   │   │   │       ├── MenuEditor.tsx
+│   │   │   │       └── MenuItemCard.tsx
+│   │   │   │
+│   │   │   ├── lib/
+│   │   │   │   ├── qr-content.config.tsx
+│   │   │   │   ├── qr-content.helpers.ts
+│   │   │   │   ├── qr-content.styles.ts
+│   │   │   │   └── qr-content.upload.ts
+│   │   │   │
+│   │   │   └── types/
+│   │   │       └── qr-content.types.ts
+│   │   │
 │   │   ├── hooks/
 │   │   │   ├── useDashboardData.ts
 │   │   │   └── useQrDetails.ts
