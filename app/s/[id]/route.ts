@@ -47,12 +47,28 @@ export async function GET(
 
   console.log("QR row:", row);
 
-  const payload =
-    row.qr_data ??
-    row.content ??
-    row.payload ??
-    row.data ??
-    {};
+  function parsePayload(value: unknown) {
+  if (!value) return {};
+
+  if (typeof value === "object") return value as Record<string, any>;
+
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return {};
+    }
+  }
+
+  return {};
+}
+
+const payload = parsePayload(
+  row.qr_data ??
+  row.content ??
+  row.payload ??
+  row.data
+);
 
   const baseUrl = new URL(request.url).origin;
 
