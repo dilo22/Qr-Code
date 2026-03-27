@@ -32,31 +32,45 @@ qrcode/
 │   │
 │   ├── dashboard/
 │   │   ├── components/
+│   │   │   ├── qr-details/
+│   │   │   │   ├── PreviewQR.tsx
+│   │   │   │   ├── QRContentDetails.tsx
+│   │   │   │   ├── QrDetailsAnalytics.tsx
+│   │   │   │   ├── QrDetailsHeader.tsx
+│   │   │   │   ├── QRDetailsView.tsx
+│   │   │   │   └── StaticTrackingNotice.tsx
+│   │   │   ├── ui/
+│   │   │   │   ├── EmptyChartState.tsx
+│   │   │   │   ├── InfoCard.tsx
+│   │   │   │   ├── ModeBadge.tsx
+│   │   │   │   ├── SectionCard.tsx
+│   │   │   │   └── StatusBadge.tsx
 │   │   │   ├── CustomSelect.tsx
 │   │   │   ├── DashboardFilters.tsx
 │   │   │   ├── DashboardHeader.tsx
 │   │   │   ├── DashboardView.tsx
 │   │   │   ├── MiniQR.tsx
 │   │   │   ├── QRCard.tsx
-│   │   │   ├── QRDetailsView.tsx
-│   │   │   ├── SettingsForm.tsx
-│   │   │   ├── Sidebar.tsx
-│   │   │   └── StyledQRPreview.tsx
-│   │   ├── hooks/
-│   │   │   └── useDashboardData.ts
-│   │   ├── lib/
-│   │   │   ├── dashboard.utils.ts
-│   │   │   ├── qr-utils.ts
-│   │   │   ├── qr-details.helpers.ts
-│   │   │   └── qr-details.analytics.ts
-│   │   ├── types/
-│   │   │   ├── dashboard.types.ts
-│   │   │   └── qr-details.types.ts
+│   │   │   ├── settings-form.tsx
+│   │   │   ├── sidebar.tsx
+│   │   │   └── styled-qr-preview.tsx
 │   │   ├── create/
 │   │   │   ├── CreateQRContent.tsx
 │   │   │   ├── CreateQRDesign.tsx
 │   │   │   ├── CreateQRExport.tsx
 │   │   │   └── CreateQRForm.tsx
+│   │   ├── hooks/
+│   │   │   ├── useDashboardData.ts
+│   │   │   └── useQrDetails.ts
+│   │   ├── lib/
+│   │   │   ├── app-url.ts
+│   │   │   ├── dashboard.utils.ts
+│   │   │   ├── qr-details.analytics.ts
+│   │   │   ├── qr-details.helpers.ts
+│   │   │   └── qr-utils.ts
+│   │   ├── types/
+│   │   │   ├── dashboard.types.ts
+│   │   │   └── qr-details.types.ts
 │   │   └── index.ts
 │   │
 │   ├── home/

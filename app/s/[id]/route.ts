@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "crypto";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,7 +9,6 @@ const supabase = createClient(
 
 function parseContent(content: string | null) {
   if (!content) return null;
-
   try {
     return JSON.parse(content);
   } catch {
@@ -28,28 +28,9 @@ function detectDevice(userAgent: string | null) {
 
 function getRedirectUrl(qr: any) {
   const parsedContent = parseContent(qr.content);
-
   if (!parsedContent) return null;
 
-  switch (qr.type) {
-    case "url":
-    case "instagram":
-    case "facebook":
-    case "tiktok":
-    case "linkedin":
-    case "twitter":
-    case "youtube":
-    case "pdf":
-    case "image":
-    case "audio":
-    case "app":
-    case "menu":
-    case "review":
-      return parsedContent.url || null;
-
-    default:
-      return null;
-  }
+  return parsedContent.url || null;
 }
 
 export async function GET(
@@ -58,27 +39,46 @@ export async function GET(
 ) {
   const { id } = await context.params;
 
+  console.log("ROUTE ID:", id);
+
+  // 🔍 TEST : voir si Supabase retourne des lignes
+  const { data: sampleRows, error: sampleError } = await supabase
+    .from("qr_codes")
+    .select("id, name")
+    .limit(5);
+
+  console.log("SAMPLE ROWS:", sampleRows);
+  console.log("SAMPLE ERROR:", sampleError);
+
+  // 🔍 vraie requête
   const { data: qr, error } = await supabase
     .from("qr_codes")
     .select("*")
     .eq("id", id)
-    .single();
+    .maybeSingle();
 
-  if (error || !qr) {
+  console.log("QR FETCHED:", qr);
+  console.log("QR ERROR:", error);
+
+  if (!qr) {
     return new NextResponse("QR code introuvable.", { status: 404 });
   }
 
   const userAgent = request.headers.get("user-agent");
   const device = detectDevice(userAgent);
 
-  const { error: scanError } = await supabase.from("qr_scans").insert({
+  let visitorKey = request.cookies.get("visitor_key")?.value;
+  if (!visitorKey) {
+    visitorKey = randomUUID();
+  }
+
+  console.log("VISITOR KEY:", visitorKey);
+
+  await supabase.from("qr_scans").insert({
     qr_code_id: qr.id,
     device,
+    visitor_key: visitorKey,
   });
-
-  if (scanError) {
-    console.error("SCAN INSERT ERROR:", scanError);
-  }
 
   const redirectUrl = getRedirectUrl(qr);
 
@@ -88,5 +88,14 @@ export async function GET(
     });
   }
 
-  return NextResponse.redirect(redirectUrl);
+  const response = NextResponse.redirect(redirectUrl);
+
+  response.cookies.set("visitor_key", visitorKey, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+
+  return response;
 }
