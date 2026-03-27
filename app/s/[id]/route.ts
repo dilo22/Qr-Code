@@ -1,121 +1,101 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { randomUUID } from "crypto";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-function parseContent(content: string | null) {
-  if (!content) return null;
+type RouteContext = {
+  params: Promise<{
+    id: string;
+  }>;
+};
 
-  try {
-    return JSON.parse(content);
-  } catch {
-    return null;
-  }
-}
-
-function detectDevice(userAgent: string | null) {
-  if (!userAgent) return "unknown";
-
-  const ua = userAgent.toLowerCase();
-
-  if (/tablet|ipad/.test(ua)) return "tablet";
-  if (/mobile|android|iphone/.test(ua)) return "mobile";
-  return "desktop";
-}
-
-function isHostedFileType(type: string) {
-  return ["pdf", "image", "audio", "video"].includes(type);
-}
-
-function getAppUrl(request: NextRequest) {
-  return (process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin).replace(/\/$/, "");
-}
-
-function getRedirectUrl(qr: any, request: NextRequest) {
-  const parsedContent = parseContent(qr.content);
-  if (!parsedContent) return null;
-
-  const appUrl = getAppUrl(request);
-
-  if (qr.type === "vcard") {
-    return `${appUrl}/card/${qr.id}`;
-  }
-
-  if (isHostedFileType(qr.type) && parsedContent.storagePath) {
-    return `${appUrl}/view/${qr.id}`;
-  }
-
-  return parsedContent.url || null;
-}
-
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: Request, context: RouteContext) {
   const { id } = await context.params;
 
-  const { data: qr, error } = await supabase
+  const { data, error } = await supabase
     .from("qr_codes")
     .select("*")
     .eq("id", id)
-    .maybeSingle();
+    .single();
 
-  if (error) {
-    console.error("QR FETCH ERROR:", error);
-    return new NextResponse("Erreur lors du chargement du QR code.", {
-      status: 500,
-    });
-  }
-
-  if (!qr) {
+  if (error || !data) {
     return new NextResponse("QR code introuvable.", { status: 404 });
   }
 
-  if (qr.status !== "active") {
-    return new NextResponse("Ce QR code est désactivé.", {
-      status: 403,
-    });
+  const baseUrl = new URL(request.url).origin;
+
+  switch (data.type) {
+    case "url":
+    case "instagram":
+    case "facebook":
+    case "tiktok":
+    case "linkedin":
+    case "twitter":
+    case "youtube":
+    case "app":
+    case "review": {
+      if (!data.url) {
+        return new NextResponse("Aucune destination trouvée.", { status: 404 });
+      }
+
+      return NextResponse.redirect(data.url);
+    }
+
+    case "menu": {
+      return NextResponse.redirect(`${baseUrl}/menu/${data.id}`);
+    }
+
+    case "location": {
+      if (data.latitude && data.longitude) {
+        return NextResponse.redirect(
+          `https://www.google.com/maps?q=${data.latitude},${data.longitude}`
+        );
+      }
+
+      if (data.address) {
+        return NextResponse.redirect(
+          `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.address)}`
+        );
+      }
+
+      return new NextResponse("Aucune destination trouvée.", { status: 404 });
+    }
+
+    case "phone": {
+      if (!data.phone) {
+        return new NextResponse("Aucune destination trouvée.", { status: 404 });
+      }
+
+      return NextResponse.redirect(`tel:${data.phone}`);
+    }
+
+    case "email": {
+      if (!data.email) {
+        return new NextResponse("Aucune destination trouvée.", { status: 404 });
+      }
+
+      const subject = encodeURIComponent(data.subject || "");
+      const body = encodeURIComponent(data.body || "");
+
+      return NextResponse.redirect(
+        `mailto:${data.email}?subject=${subject}&body=${body}`
+      );
+    }
+
+    case "sms": {
+      if (!data.phone) {
+        return new NextResponse("Aucune destination trouvée.", { status: 404 });
+      }
+
+      const message = encodeURIComponent(data.message || "");
+      return NextResponse.redirect(`sms:${data.phone}?body=${message}`);
+    }
+
+    default: {
+      return new NextResponse("Type de QR non pris en charge.", { status: 400 });
+    }
   }
-
-  const redirectUrl = getRedirectUrl(qr, request);
-
-  if (!redirectUrl) {
-    return new NextResponse("Aucune destination trouvée.", {
-      status: 400,
-    });
-  }
-
-  const userAgent = request.headers.get("user-agent");
-  const device = detectDevice(userAgent);
-
-  let visitorKey = request.cookies.get("visitor_key")?.value;
-  if (!visitorKey) {
-    visitorKey = randomUUID();
-  }
-
-  const { error: scanError } = await supabase.from("qr_scans").insert({
-    qr_code_id: qr.id,
-    device,
-    visitor_key: visitorKey,
-  });
-
-  if (scanError) {
-    console.error("SCAN INSERT ERROR:", scanError);
-  }
-
-  const response = NextResponse.redirect(redirectUrl);
-
-  response.cookies.set("visitor_key", visitorKey, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 365,
-  });
-
-  return response;
 }
