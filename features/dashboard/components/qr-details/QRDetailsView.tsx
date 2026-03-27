@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import {
   Activity,
   CalendarDays,
-  CheckCircle2,
   Palette,
   QrCode,
   ScanLine,
@@ -16,9 +15,7 @@ import { useQrDetails } from "@/features/dashboard/hooks/useQrDetails";
 import { buildQrAnalytics } from "@/features/dashboard/lib/qr-details.analytics";
 import {
   formatDate,
-  getDisplayName,
   getPreviewValue,
-  getStatus,
 } from "@/features/dashboard/lib/qr-details.helpers";
 
 import { InfoCard } from "@/features/dashboard/components/ui/InfoCard";
@@ -34,8 +31,16 @@ type Props = {
 
 export default function QRDetailsView({ qrId }: Props) {
   const router = useRouter();
-  const { qr, scans, loading, error, isDeleting, deleteQr } = useQrDetails(qrId);
-  
+  const {
+    qr,
+    scans,
+    loading,
+    error,
+    isDeleting,
+    isTogglingStatus,
+    deleteQr,
+    toggleQrStatus,
+  } = useQrDetails(qrId);
 
   const analytics = useMemo(() => buildQrAnalytics(scans), [scans]);
   const qrMode: "dynamic" | "static" = qr?.qr_mode === "static" ? "static" : "dynamic";
@@ -45,7 +50,7 @@ export default function QRDetailsView({ qrId }: Props) {
     if (!qr) return;
 
     const confirmed = window.confirm(
-      `Supprimer définitivement le QR code "${getDisplayName(qr)}" ?`
+      `Supprimer définitivement le QR code "${qr.name || qr.title || qr.id}" ?`
     );
 
     if (!confirmed) return;
@@ -56,6 +61,20 @@ export default function QRDetailsView({ qrId }: Props) {
       router.replace("/dashboard");
       router.refresh();
     }
+  };
+
+  const handleToggleStatus = async () => {
+    if (!qr) return;
+
+    const nextAction = qr.status === "active" ? "désactiver" : "activer";
+    const confirmed = window.confirm(
+      `Voulez-vous vraiment ${nextAction} ce QR code ?`
+    );
+
+    if (!confirmed) return;
+
+    await toggleQrStatus();
+    router.refresh();
   };
 
   if (loading) {
@@ -78,7 +97,9 @@ export default function QRDetailsView({ qrId }: Props) {
         qr={qr}
         qrMode={qrMode}
         isDeleting={isDeleting}
+        isTogglingStatus={isTogglingStatus}
         onDelete={handleDelete}
+        onToggleStatus={handleToggleStatus}
       />
 
       {error ? (
@@ -87,11 +108,7 @@ export default function QRDetailsView({ qrId }: Props) {
         </div>
       ) : null}
 
-      {isDynamic ? (
-        <QrDetailsAnalytics analytics={analytics} />
-      ) : (
-        <StaticTrackingNotice />
-      )}
+      {isDynamic ? <QrDetailsAnalytics analytics={analytics} /> : <StaticTrackingNotice />}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
         <div className="min-w-0 space-y-6">
@@ -102,11 +119,6 @@ export default function QRDetailsView({ qrId }: Props) {
               icon={<Type className="h-4 w-4 text-emerald-400" />}
               label="Type"
               value={qr.type || "—"}
-            />
-            <InfoCard
-              icon={<CheckCircle2 className="h-4 w-4 text-amber-400" />}
-              label="Statut"
-              value={getStatus(qr)}
             />
             <InfoCard
               icon={<QrCode className="h-4 w-4 text-cyan-400" />}

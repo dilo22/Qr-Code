@@ -9,6 +9,7 @@ const supabase = createClient(
 
 function parseContent(content: string | null) {
   if (!content) return null;
+
   try {
     return JSON.parse(content);
   } catch {
@@ -39,29 +40,35 @@ export async function GET(
 ) {
   const { id } = await context.params;
 
-  console.log("ROUTE ID:", id);
-
-  // 🔍 TEST : voir si Supabase retourne des lignes
-  const { data: sampleRows, error: sampleError } = await supabase
-    .from("qr_codes")
-    .select("id, name")
-    .limit(5);
-
-  console.log("SAMPLE ROWS:", sampleRows);
-  console.log("SAMPLE ERROR:", sampleError);
-
-  // 🔍 vraie requête
   const { data: qr, error } = await supabase
     .from("qr_codes")
     .select("*")
     .eq("id", id)
     .maybeSingle();
 
-  console.log("QR FETCHED:", qr);
-  console.log("QR ERROR:", error);
+  if (error) {
+    console.error("QR FETCH ERROR:", error);
+    return new NextResponse("Erreur lors du chargement du QR code.", {
+      status: 500,
+    });
+  }
 
   if (!qr) {
     return new NextResponse("QR code introuvable.", { status: 404 });
+  }
+
+  if (qr.status !== "active") {
+    return new NextResponse("Ce QR code est désactivé.", {
+      status: 403,
+    });
+  }
+
+  const redirectUrl = getRedirectUrl(qr);
+
+  if (!redirectUrl) {
+    return new NextResponse("Aucune URL de redirection trouvée.", {
+      status: 400,
+    });
   }
 
   const userAgent = request.headers.get("user-agent");
@@ -72,20 +79,14 @@ export async function GET(
     visitorKey = randomUUID();
   }
 
-  console.log("VISITOR KEY:", visitorKey);
-
-  await supabase.from("qr_scans").insert({
+  const { error: scanError } = await supabase.from("qr_scans").insert({
     qr_code_id: qr.id,
     device,
     visitor_key: visitorKey,
   });
 
-  const redirectUrl = getRedirectUrl(qr);
-
-  if (!redirectUrl) {
-    return new NextResponse("Aucune URL de redirection trouvée.", {
-      status: 400,
-    });
+  if (scanError) {
+    console.error("SCAN INSERT ERROR:", scanError);
   }
 
   const response = NextResponse.redirect(redirectUrl);
@@ -93,6 +94,7 @@ export async function GET(
   response.cookies.set("visitor_key", visitorKey, {
     httpOnly: true,
     sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
   });

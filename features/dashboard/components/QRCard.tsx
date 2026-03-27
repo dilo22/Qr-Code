@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, Clock, BarChart3, Pencil, Trash2, Info } from "lucide-react";
+import {
+  Eye,
+  Clock,
+  BarChart3,
+  Pencil,
+  Trash2,
+  Info,
+  ChevronRight,
+  Zap,
+} from "lucide-react";
 import type { QRCodeItem } from "@/features/dashboard/types/dashboard.types";
 import {
   getProjectDisplayName,
@@ -27,58 +36,73 @@ function Badge({
   status: string;
 }) {
   const colors: Record<string, string> = {
-    active: "bg-emerald-500/20 text-emerald-400",
-    paused: "bg-amber-500/20 text-amber-400",
-    archived: "bg-white/10 text-white/40",
+    active:
+      "border-emerald-500/30 bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20",
+    paused:
+      "border-amber-500/30 bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20",
+    archived: "border-white/10 bg-white/5 text-white/40",
   };
 
   return (
     <span
-      className={`rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter ${
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-widest backdrop-blur-md ${
         colors[status] || colors.archived
       }`}
     >
+      <span
+        className={`mr-1.5 h-1 w-1 rounded-full ${
+          status === "active" ? "animate-pulse bg-emerald-400" : "bg-current"
+        }`}
+      />
       {children}
     </span>
   );
 }
 
-function ModeBadge({ mode }: { mode: "dynamic" | "static" }) {
+function StatChip({
+  icon,
+  value,
+  accent,
+}: {
+  icon: React.ReactNode;
+  value: string;
+  accent?: "cyan" | "purple";
+}) {
+  const theme =
+    accent === "purple"
+      ? "border-purple-500/15 bg-purple-500/5 text-purple-300"
+      : "border-cyan-500/15 bg-cyan-500/5 text-cyan-300";
+
   return (
-    <span
-      className={`rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-tighter ${
-        mode === "dynamic"
-          ? "bg-emerald-500/15 text-emerald-300"
-          : "bg-white/10 text-white/50"
-      }`}
+    <div
+      className={`inline-flex h-8 items-center gap-1.5 rounded-xl border px-2.5 text-[10px] font-medium ${theme}`}
     >
-      {mode === "dynamic" ? "dynamique" : "statique"}
-    </span>
+      <span className="shrink-0 opacity-90">{icon}</span>
+      <span className="truncate text-white/80">{value}</span>
+    </div>
   );
 }
 
-function IconButton({
+function ActionButton({
   icon,
-  danger = false,
   label,
+  danger = false,
 }: {
   icon: React.ReactNode;
-  danger?: boolean;
   label: string;
+  danger?: boolean;
 }) {
   return (
-    <div className="group relative">
-      <div
-        className={`flex items-center justify-center rounded-xl p-3 transition-all duration-300 ${
-          danger
-            ? "text-red-400 hover:bg-red-500/10 hover:text-red-300"
-            : "text-white/40 hover:bg-white/5 hover:text-white"
-        }`}
-      >
-        {icon}
-      </div>
+    <div
+      className={`group/btn relative flex h-9 w-9 items-center justify-center rounded-xl border transition-all duration-300 active:scale-90 ${
+        danger
+          ? "border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/20 hover:text-red-300"
+          : "border-white/10 bg-white/5 text-white/50 hover:border-cyan-500/30 hover:bg-cyan-500/10 hover:text-cyan-300"
+      }`}
+    >
+      {icon}
 
-      <div className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black px-2 py-1 text-[10px] font-bold uppercase text-white opacity-0 transition-all group-hover:opacity-100">
+      <div className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 scale-95 whitespace-nowrap rounded-md border border-white/10 bg-zinc-900 px-2 py-1 text-[10px] font-bold text-white opacity-0 transition-all group-hover/btn:scale-100 group-hover/btn:opacity-100">
         {label}
       </div>
     </div>
@@ -93,103 +117,117 @@ export default function QRCard({
   onDelete,
 }: Props) {
   const router = useRouter();
-
   const status = getProjectStatus(project);
   const projectName = getProjectDisplayName(project);
   const qrMode: "dynamic" | "static" =
     project.qr_mode === "static" ? "static" : "dynamic";
 
-  const primaryActionLabel = qrMode === "dynamic" ? "Analyses" : "Infos";
-  const primaryActionTitle =
-    qrMode === "dynamic" ? "Voir les analyses" : "Voir les informations";
-
   return (
     <div
-      role="button"
-      tabIndex={0}
       onClick={() => router.push(`/dashboard/qr/${project.id}`)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          router.push(`/dashboard/qr/${project.id}`);
-        }
-      }}
-      className="group flex cursor-pointer items-center gap-6 rounded-[2.5rem] border border-white/5 bg-white/[0.03] p-5 transition-all hover:border-white/10 hover:bg-white/[0.06]"
+      className="group relative flex items-center gap-4 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-zinc-900/50 to-black/50 px-4 py-4 transition-all duration-500 hover:border-cyan-500/30 hover:shadow-[0_0_50px_-12px_rgba(34,211,238,0.2)]"
     >
-      <MiniQR project={project} />
+      <div className="absolute -left-20 -top-20 h-40 w-40 rounded-full bg-cyan-500/10 blur-[80px] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
 
-      <div className="min-w-0 flex-1">
-        <div className="mb-1 flex items-center gap-3">
-          <h4 className="truncate text-lg font-black italic uppercase">
-            {projectName}
-          </h4>
-          <Badge status={status}>{status}</Badge>
-          <ModeBadge mode={qrMode} />
+      <div className="relative shrink-0 rounded-2xl bg-gradient-to-br from-white/10 to-transparent p-[1px] transition-transform duration-500 group-hover:scale-[1.03]">
+        <div className="rounded-2xl bg-zinc-950 p-1.5">
+          <MiniQR project={project} />
         </div>
 
-        <div className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-white/25">
-          {project.type}
-        </div>
+        {qrMode === "dynamic" && (
+          <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500 text-black shadow-lg shadow-cyan-500/20">
+            <Zap size={10} fill="currentColor" />
+          </div>
+        )}
+      </div>
 
-        <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-tight text-white/40">
-          <span className="flex items-center gap-1.5 rounded-lg bg-white/5 px-2 py-1">
-            <Eye className="h-3 w-3 text-cyan-400" />
-            {qrMode === "dynamic" ? `${scansCount} Scans` : "Sans tracking"}
-          </span>
+      <div className="relative min-w-0 flex-1">
+        <div className="flex min-w-0 items-center gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="mb-1.5 flex flex-wrap items-center gap-2">
+              <Badge status={status}>{status}</Badge>
 
-          <span className="flex items-center gap-1.5 rounded-lg bg-white/5 px-2 py-1">
-            <Clock className="h-3 w-3 text-purple-400" />
-            {qrMode === "dynamic"
-              ? formatLastScan(lastScan)
-              : "Retéléchargeable"}
-          </span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20">
+                // {project.type}
+              </span>
+            </div>
+
+            <h4
+              className="truncate text-xl font-black tracking-tighter text-zinc-100 transition-colors group-hover:text-white"
+              title={projectName}
+            >
+              {projectName}
+            </h4>
+
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <StatChip
+                icon={<Eye size={12} />}
+                value={qrMode === "dynamic" ? `${scansCount} scans` : "Statique"}
+                accent="cyan"
+              />
+
+              <StatChip
+                icon={<Clock size={12} />}
+                value={
+                  qrMode === "dynamic"
+                    ? formatLastScan(lastScan)
+                    : "No tracking"
+                }
+                accent="purple"
+              />
+            </div>
+          </div>
+
+          <div className="hidden items-center gap-2 opacity-0 transition-all duration-300 group-hover:opacity-100 md:flex">
+            <Link
+              href={`/dashboard/qr/${project.id}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ActionButton
+                icon={
+                  qrMode === "dynamic" ? (
+                    <BarChart3 size={16} />
+                  ) : (
+                    <Info size={16} />
+                  )
+                }
+                label="Analyses"
+              />
+            </Link>
+
+            <Link
+              href={`/dashboard/qr/${project.id}/edit`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ActionButton icon={<Pencil size={16} />} label="Éditer" />
+            </Link>
+
+            <button
+              disabled={isDeleting}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(project.id, projectName);
+              }}
+            >
+              <ActionButton
+                danger
+                icon={
+                  <Trash2
+                    size={16}
+                    className={isDeleting ? "animate-bounce" : ""}
+                  />
+                }
+                label="Supprimer"
+              />
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="flex translate-x-2 gap-6 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100">
-        <Link
-          href={`/dashboard/qr/${project.id}`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div title={primaryActionTitle}>
-            <IconButton
-              icon={
-                qrMode === "dynamic" ? (
-                  <BarChart3 size={18} />
-                ) : (
-                  <Info size={18} />
-                )
-              }
-              label={primaryActionLabel}
-            />
-          </div>
-        </Link>
-
-        <Link
-          href={`/dashboard/qr/${project.id}/edit`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div title="Modifier">
-            <IconButton icon={<Pencil size={18} />} label="Modifier" />
-          </div>
-        </Link>
-
-        <button
-          type="button"
-          disabled={isDeleting}
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(project.id, projectName);
-          }}
-        >
-          <div title="Supprimer">
-            <IconButton
-              danger
-              icon={<Trash2 size={18} className={isDeleting ? "animate-pulse" : ""} />}
-              label="Supprimer"
-            />
-          </div>
-        </button>
+      <div className="relative shrink-0">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/5 bg-white/5 text-white/20 transition-all duration-500 group-hover:border-cyan-500/50 group-hover:bg-cyan-500 group-hover:text-black group-hover:shadow-[0_0_20px_rgba(34,211,238,0.4)]">
+          <ChevronRight className="h-5 w-5 transition-transform duration-500 group-hover:translate-x-0.5" />
+        </div>
       </div>
     </div>
   );

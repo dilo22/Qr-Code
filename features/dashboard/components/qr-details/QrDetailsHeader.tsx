@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Power } from "lucide-react";
 import type { QRCodeItem } from "@/features/dashboard/types/qr-details.types";
 import {
   getDisplayName,
@@ -12,16 +12,22 @@ type Props = {
   qr: QRCodeItem;
   qrMode: "dynamic" | "static";
   isDeleting: boolean;
+  isTogglingStatus: boolean;
   onDelete: () => void;
+  onToggleStatus: () => void;
 };
 
 export function QrDetailsHeader({
   qr,
   qrMode,
   isDeleting,
+  isTogglingStatus,
   onDelete,
+  onToggleStatus,
 }: Props) {
   const isDynamic = qrMode === "dynamic";
+  const status = getStatus(qr);
+  const isActive = status === "active";
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -38,7 +44,7 @@ export function QrDetailsHeader({
           <h1 className="break-words text-3xl font-black italic uppercase tracking-tighter text-white">
             {getDisplayName(qr)}
           </h1>
-          <StatusBadge status={getStatus(qr)} />
+          <StatusBadge status={status} />
           <ModeBadge mode={qrMode} />
         </div>
 
@@ -50,6 +56,24 @@ export function QrDetailsHeader({
       </div>
 
       <div className="flex shrink-0 flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={onToggleStatus}
+          disabled={isTogglingStatus}
+          className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-xs font-black uppercase tracking-[0.18em] transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60 ${
+            isActive
+              ? "border border-amber-500/20 bg-amber-500/10 text-amber-300 hover:scale-[1.02] hover:bg-amber-500/20"
+              : "border border-emerald-500/20 bg-emerald-500/10 text-emerald-300 hover:scale-[1.02] hover:bg-emerald-500/20"
+          }`}
+        >
+          <Power size={16} />
+          {isTogglingStatus
+            ? "Mise à jour..."
+            : isActive
+            ? "Désactiver"
+            : "Activer"}
+        </button>
+
         <Link
           href={`/dashboard/qr/${qr.id}/edit`}
           className="group inline-flex items-center gap-2 rounded-2xl bg-cyan-500 px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-white shadow-lg shadow-cyan-500/25 transition-all duration-300 hover:scale-[1.02] hover:bg-white"
