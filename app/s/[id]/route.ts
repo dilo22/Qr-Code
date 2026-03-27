@@ -31,13 +31,22 @@ function isHostedFileType(type: string) {
   return ["pdf", "image", "audio", "video"].includes(type);
 }
 
+function getAppUrl(request: NextRequest) {
+  return (process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin).replace(/\/$/, "");
+}
+
 function getRedirectUrl(qr: any, request: NextRequest) {
   const parsedContent = parseContent(qr.content);
   if (!parsedContent) return null;
 
+  const appUrl = getAppUrl(request);
+
+  if (qr.type === "vcard") {
+    return `${appUrl}/card/${qr.id}`;
+  }
+
   if (isHostedFileType(qr.type) && parsedContent.storagePath) {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
-    return `${appUrl.replace(/\/$/, "")}/view/${qr.id}`;
+    return `${appUrl}/view/${qr.id}`;
   }
 
   return parsedContent.url || null;

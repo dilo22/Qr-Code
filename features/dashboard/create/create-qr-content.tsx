@@ -38,6 +38,8 @@ import {
   Clock3,
   Wallet,
   Type,
+  Plus,
+  Trash2,
 } from "lucide-react";
 
 type Props = {
@@ -53,7 +55,16 @@ function getTypeMeta(type: string) {
     url: { icon: <LinkIcon size={22} />, title: "Lien web", description: "Redirigez vers une URL." },
     wifi: { icon: <Wifi size={22} />, title: "Wi-Fi", description: "Connexion rapide à un réseau." },
     text: { icon: <FileText size={22} />, title: "Texte", description: "Affichez un texte simple après scan." },
-    vcard: { icon: <UserSquare2 size={22} />, title: "Carte de visite", description: "Partagez vos coordonnées complètes." },
+    contact: {
+      icon: <UserSquare2 size={22} />,
+      title: "Contact",
+      description: "Créez une fiche contact classique encodée dans le QR.",
+    },
+    vcard: {
+      icon: <UserSquare2 size={22} />,
+      title: "Carte profil",
+      description: "Créez une page profil dynamique avec photo, bio et liens.",
+    },
     email: { icon: <Mail size={22} />, title: "Email", description: "Préparez un email avec objet et message." },
     sms: { icon: <MessageSquare size={22} />, title: "SMS", description: "Envoyez un message à un numéro." },
     phone: { icon: <Phone size={22} />, title: "Téléphone", description: "Lancez un appel directement." },
@@ -89,6 +100,8 @@ function getAcceptedTypes(type: string) {
       return "image/*";
     case "audio":
       return "audio/*";
+    case "vcard":
+      return "image/*";
     default:
       return "*/*";
   }
@@ -147,7 +160,10 @@ export default function CreateQrContent({
   onLiveChange,
   initialData = {},
 }: Props) {
-  const [form, setForm] = useState<Record<string, any>>(initialData);
+  const [form, setForm] = useState<Record<string, any>>({
+    links: [],
+    ...initialData,
+  });
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -155,6 +171,31 @@ export default function CreateQrContent({
     const updated = { ...form, [field]: newValue };
     setForm(updated);
     onLiveChange?.(updated);
+  };
+
+  const handleLinksChange = (nextLinks: Array<{ label: string; url: string }>) => {
+    const updated = { ...form, links: nextLinks };
+    setForm(updated);
+    onLiveChange?.(updated);
+  };
+
+  const addLinkItem = () => {
+    const nextLinks = [...(form.links || []), { label: "", url: "" }];
+    handleLinksChange(nextLinks);
+  };
+
+  const updateLinkItem = (index: number, field: "label" | "url", value: string) => {
+    const nextLinks = [...(form.links || [])];
+    nextLinks[index] = {
+      ...nextLinks[index],
+      [field]: value,
+    };
+    handleLinksChange(nextLinks);
+  };
+
+  const removeLinkItem = (index: number) => {
+    const nextLinks = (form.links || []).filter((_: any, i: number) => i !== index);
+    handleLinksChange(nextLinks);
   };
 
   const meta = getTypeMeta(type);
@@ -232,6 +273,130 @@ export default function CreateQrContent({
     </div>
   );
 
+  const renderAvatarUploadField = () => (
+    <div className="space-y-5">
+      <Field label="Photo de profil" icon={<ImageIcon size={14} />}>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            setUploadError(null);
+            setIsUploading(true);
+
+            try {
+              const uploaded = await uploadQrFile(file, "vcard");
+              const updated = {
+                ...form,
+                avatarPath: uploaded.storagePath,
+                avatarFileName: uploaded.fileName,
+                avatarMimeType: uploaded.mimeType,
+                avatarSize: uploaded.size,
+              };
+
+              setForm(updated);
+              onLiveChange?.(updated);
+            } catch (error: any) {
+              console.error("UPLOAD AVATAR ERROR:", error);
+              setUploadError(error?.message || "Erreur lors de l’upload de l’image.");
+            } finally {
+              setIsUploading(false);
+            }
+          }}
+          className={inputClass}
+        />
+      </Field>
+
+      {isUploading && (
+        <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-300">
+          Upload de l’image en cours...
+        </div>
+      )}
+
+      {uploadError && (
+        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {uploadError}
+        </div>
+      )}
+
+      {form.avatarFileName && (
+        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70">
+          <div className="font-medium text-white/90">{form.avatarFileName}</div>
+          <div className="mt-1 text-xs text-white/45">
+            {form.avatarMimeType || "Type inconnu"}
+            {form.avatarSize ? ` • ${formatFileSize(form.avatarSize)}` : ""}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderLinksEditor = () => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <label className="pl-1 text-[11px] font-black uppercase tracking-[0.1em] text-white/45">
+          Liens personnalisés
+        </label>
+
+        <button
+          type="button"
+          onClick={addLinkItem}
+          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-bold text-white transition hover:bg-white/[0.08]"
+        >
+          <Plus size={14} />
+          Ajouter un lien
+        </button>
+      </div>
+
+      {(form.links || []).length === 0 && (
+        <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.03] px-4 py-4 text-sm text-white/45">
+          Aucun lien ajouté pour le moment.
+        </div>
+      )}
+
+      {(form.links || []).map((link: { label: string; url: string }, index: number) => (
+        <div
+          key={index}
+          className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+        >
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1.4fr_auto]">
+            <Field label="Label" icon={<Hash size={14} />}>
+              <input
+                type="text"
+                placeholder="Ex: Portfolio"
+                value={link.label || ""}
+                onChange={(e) => updateLinkItem(index, "label", e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+
+            <Field label="Lien" icon={<Globe size={14} />}>
+              <input
+                type="text"
+                placeholder="https://..."
+                value={link.url || ""}
+                onChange={(e) => updateLinkItem(index, "url", e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() => removeLinkItem(index)}
+                className="inline-flex h-[50px] items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 px-4 text-red-300 transition hover:bg-red-500/20"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   const renderFields = () => {
     switch (type) {
       case "wifi":
@@ -292,7 +457,7 @@ export default function CreateQrContent({
           </Field>
         );
 
-      case "vcard":
+      case "contact":
         return (
           <div className="space-y-5">
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -382,6 +547,113 @@ export default function CreateQrContent({
                 />
               </Field>
             </div>
+          </div>
+        );
+
+      case "vcard":
+        return (
+          <div className="space-y-6">
+            {renderAvatarUploadField()}
+
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <Field label="Nom affiché" icon={<UserSquare2 size={14} />}>
+                <input
+                  type="text"
+                  placeholder="Ex: Sophie Martin"
+                  value={form.name || ""}
+                  onChange={(e) => handleChange("name", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="Titre / accroche" icon={<Briefcase size={14} />}>
+                <input
+                  type="text"
+                  placeholder="Ex: Designer produit"
+                  value={form.headline || ""}
+                  onChange={(e) => handleChange("headline", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+            </div>
+
+            <Field label="Bio / description" icon={<FileText size={14} />}>
+              <textarea
+                rows={5}
+                placeholder="Présentez-vous en quelques lignes..."
+                value={form.bio || ""}
+                onChange={(e) => handleChange("bio", e.target.value)}
+                className={textareaClass}
+              />
+            </Field>
+
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <Field label="Téléphone" icon={<Phone size={14} />}>
+                <input
+                  type="text"
+                  placeholder="+33 6 12 34 56 78"
+                  value={form.phone || ""}
+                  onChange={(e) => handleChange("phone", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="Email" icon={<Mail size={14} />}>
+                <input
+                  type="email"
+                  placeholder="contact@entreprise.com"
+                  value={form.email || ""}
+                  onChange={(e) => handleChange("email", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <Field label="Entreprise" icon={<Building2 size={14} />}>
+                <input
+                  type="text"
+                  placeholder="Nom de l’entreprise"
+                  value={form.company || ""}
+                  onChange={(e) => handleChange("company", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="Poste" icon={<Briefcase size={14} />}>
+                <input
+                  type="text"
+                  placeholder="Fonction"
+                  value={form.jobTitle || ""}
+                  onChange={(e) => handleChange("jobTitle", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              <Field label="Adresse" icon={<MapPinned size={14} />}>
+                <input
+                  type="text"
+                  placeholder="Adresse complète"
+                  value={form.address || ""}
+                  onChange={(e) => handleChange("address", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+
+              <Field label="Site principal" icon={<Globe size={14} />}>
+                <input
+                  type="text"
+                  placeholder="https://monsite.com"
+                  value={form.website || ""}
+                  onChange={(e) => handleChange("website", e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+            </div>
+
+            {renderLinksEditor()}
           </div>
         );
 

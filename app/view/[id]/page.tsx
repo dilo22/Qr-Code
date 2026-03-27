@@ -134,11 +134,7 @@ export default async function ViewQrFilePage({
         </div>
 
         <div className="mb-4 flex flex-wrap gap-3">
-          {(qr.type === "pdf" || qr.type === "image" || qr.type === "video") && (
-            <ActionButton href={fileUrl} target="_blank">
-              Ouvrir / Zoomer
-            </ActionButton>
-          )}
+          
 
           <ActionButton
             href={fileUrl}

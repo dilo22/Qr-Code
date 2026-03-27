@@ -41,7 +41,8 @@ const QR_TYPES = [
   { id: "url", label: "Lien", icon: <LinkIcon size={16} />, accent: "from-blue-400 to-cyan-400" },
   { id: "wifi", label: "WiFi", icon: <Wifi size={16} />, accent: "from-violet-500 to-purple-500" },
   { id: "text", label: "Texte", icon: <FileText size={16} />, accent: "from-emerald-400 to-teal-500" },
-  { id: "vcard", label: "vCard", icon: <UserSquare2 size={16} />, accent: "from-pink-500 to-rose-500" },
+  { id: "contact", label: "Contact", icon: <UserSquare2 size={16} />, accent: "from-pink-500 to-rose-500" },
+  { id: "vcard", label: "Carte profil", icon: <UserSquare2 size={16} />, accent: "from-fuchsia-500 to-violet-500" },
   { id: "email", label: "Email", icon: <Mail size={16} />, accent: "from-sky-400 to-blue-500" },
   { id: "sms", label: "SMS", icon: <MessageSquare size={16} />, accent: "from-amber-400 to-orange-500" },
   { id: "phone", label: "Tel", icon: <Phone size={16} />, accent: "from-lime-400 to-green-500" },
@@ -91,12 +92,28 @@ function getMainInfo(type: string, data: Record<string, any>) {
   switch (type) {
     case "url":
       return data.url || "Aucun lien";
+
     case "wifi":
       return data.ssid ? `Réseau : ${data.ssid}` : "WiFi non renseigné";
+
+    case "contact":
+      return [data.firstName, data.lastName].filter(Boolean).join(" ") || data.name || "Contact vide";
+
     case "vcard":
-      return [data.firstName, data.lastName].filter(Boolean).join(" ") || "Contact vide";
+      return (
+        data.name ||
+        [data.firstName, data.lastName].filter(Boolean).join(" ") ||
+        data.headline ||
+        "Carte profil"
+      );
+
+    case "pdf":
+    case "image":
+    case "audio":
+      return data.name || data.fileName || "Fichier";
+
     default:
-      return data.url || data.text || data.phone || data.email || "Contenu renseigné";
+      return data.url || data.text || data.phone || data.email || data.name || "Contenu renseigné";
   }
 }
 
@@ -115,6 +132,7 @@ function isTrackableType(type: QrTypeId) {
     "app",
     "menu",
     "review",
+    "vcard",
   ].includes(type);
 }
 
@@ -259,7 +277,7 @@ export function CreateQrForm({
         setSavedQrId(finalId);
       }
 
-      if (isTrackableType(nextType)) {
+      if (isTrackableType(nextType) && finalId) {
         finalQrValue = buildTrackingUrl(finalId);
       }
 
@@ -300,7 +318,6 @@ export function CreateQrForm({
       );
 
       return null;
-    
     } finally {
       setIsSaving(false);
     }
@@ -489,7 +506,7 @@ export function CreateQrForm({
                   dotsStyle: "square",
                   cornersStyle: "square",
                 });
-                setSaveError(null); 
+                setSaveError(null);
                 setSavedQrId(null);
               }}
             />

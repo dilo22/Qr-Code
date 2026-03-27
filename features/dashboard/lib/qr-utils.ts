@@ -52,6 +52,14 @@ export function buildQrValue(type: string, qrData: Record<string, any>) {
     case "video":
       return clean(qrData.fileName || qrData.name || "Fichier hébergé");
 
+    case "vcard":
+      return clean(
+        qrData.name ||
+          [qrData.firstName, qrData.lastName].filter(Boolean).join(" ") ||
+          qrData.headline ||
+          "Carte profil"
+      );
+
     case "wifi":
       return `WIFI:T:${qrData.encryption || "WPA"};S:${clean(qrData.ssid)};P:${clean(
         qrData.password
@@ -73,7 +81,7 @@ export function buildQrValue(type: string, qrData: Record<string, any>) {
         qrData.message ? `?body=${encodeURIComponent(clean(qrData.message))}` : ""
       }`;
 
-    case "vcard": {
+    case "contact": {
       const firstName = clean(qrData.firstName);
       const lastName = clean(qrData.lastName);
       const fullName = [firstName, lastName].filter(Boolean).join(" ");
