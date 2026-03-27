@@ -63,7 +63,7 @@ export default function LocationMap({ value, onChange }: Props) {
       return { lat, lng };
     }
 
-    return { lat: 48.8566, lng: 2.3522 };
+    return { lat: 31.5017, lng: 34.4668 };
   }, [value.latitude, value.longitude]);
 
   const [position, setPosition] = useState<Position>(initialPosition);
