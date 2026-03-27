@@ -20,9 +20,9 @@ function normalizeUrl(url: string | null | undefined) {
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
 
   const { data, error } = await supabase
     .from("qr_codes")
@@ -46,15 +46,6 @@ export async function GET(
   }
 
   console.log("QR row:", row);
-  console.log("DEBUG DATA:", {
-    id,
-    type: row.type,
-    dataUrl: row.url,
-    payload: row.qr_data,
-    content: row.content,
-    payloadAlt: row.payload,
-    dataAlt: row.data,
-  });
 
   const payload =
     row.qr_data ??
@@ -66,14 +57,6 @@ export async function GET(
   const baseUrl = new URL(request.url).origin;
 
   const url = row.url ?? payload?.url ?? null;
-  console.log("DEBUG URL:", {
-    id,
-    dataUrl: row.url,
-    payloadUrl: payload?.url,
-    finalUrl: url,
-    payload,
-  });
-
   const phone = row.phone ?? payload?.phone ?? null;
   const email = row.email ?? payload?.email ?? null;
   const subject = row.subject ?? payload?.subject ?? "";
