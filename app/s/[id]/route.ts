@@ -6,12 +6,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-type RouteContext = {
-  params: {
-    id: string;
-  };
-};
-
 function normalizeUrl(url: string | null | undefined) {
   const value = String(url || "").trim();
 
@@ -24,8 +18,11 @@ function normalizeUrl(url: string | null | undefined) {
   return `https://${value}`;
 }
 
-export async function GET(request: Request, context: RouteContext) {
-  const { id } = context.params;
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
 
   const { data, error } = await supabase
     .from("qr_codes")
