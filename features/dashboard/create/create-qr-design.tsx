@@ -262,9 +262,6 @@ export default function CreateQrDesign({
                   <span className="block text-[11px] font-bold uppercase tracking-widest text-white/40">
                     Couleur des yeux
                   </span>
-                  <span className="text-[10px] text-white/30">
-                    Personnaliser les coins du QR indépendamment du reste
-                  </span>
                 </div>
 
                 <button
