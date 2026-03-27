@@ -222,3 +222,23 @@ select.qr-input option {
 .animate-chart-glow {
   animation: chart-glow 1.2s ease-in-out;
 }
+
+
+@keyframes scan {
+  0% {
+    transform: translateY(0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(320px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 0.3;
+  }
+}
+
+.animate-scan {
+  animation: scan 4s ease-in-out infinite;
+}

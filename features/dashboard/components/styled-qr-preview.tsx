@@ -17,10 +17,10 @@ export default function StyledQrPreview({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const qrInstanceRef = useRef<QRCodeStyling | null>(null);
 
-  const qrOptions = useMemo(
-    () => buildQrOptions(data, design, QR_RENDER_SIZE),
-    [data, design]
-  );
+  const qrOptions = useMemo(() => {
+    console.log("QR PREVIEW DATA =", data);
+    return buildQrOptions(data, design, QR_RENDER_SIZE);
+  }, [data, design]);
 
   useEffect(() => {
     if (!containerRef.current) return;
