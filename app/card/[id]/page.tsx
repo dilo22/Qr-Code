@@ -158,6 +158,7 @@ export default async function CardPage({
   }
 
   const displayName =
+    content.displayName ||
     content.name ||
     [content.firstName, content.lastName].filter(Boolean).join(" ") ||
     qr.title ||

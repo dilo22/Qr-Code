@@ -54,7 +54,8 @@ export function buildQrValue(type: string, qrData: Record<string, any>) {
 
     case "vcard":
       return clean(
-        qrData.name ||
+        qrData.displayName ||
+          qrData.name ||
           [qrData.firstName, qrData.lastName].filter(Boolean).join(" ") ||
           qrData.headline ||
           "Carte profil"

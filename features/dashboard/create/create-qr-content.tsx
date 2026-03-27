@@ -560,7 +560,7 @@ export default function CreateQrContent({
                 <input
                   type="text"
                   placeholder="Ex: Sophie Martin"
-                  value={form.name || ""}
+                  value={form.displayName  || ""}
                   onChange={(e) => handleChange("name", e.target.value)}
                   className={inputClass}
                 />
@@ -897,7 +897,7 @@ export default function CreateQrContent({
             <input
               type="text"
               placeholder="Ex: Menu restaurant, WiFi bureau..."
-              value={form.name || ""}
+              value={form.projectName || ""}
               onChange={(e) => handleChange("name", e.target.value)}
               className={`${inputClass} border-dashed`}
             />

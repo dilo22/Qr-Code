@@ -91,18 +91,22 @@ function getMainInfo(type: string, data: Record<string, any>) {
 
   switch (type) {
     case "url":
-      return data.url || "Aucun lien";
+      return data.projectName || data.url || "Aucun lien";
 
     case "wifi":
-      return data.ssid ? `Réseau : ${data.ssid}` : "WiFi non renseigné";
+      return data.projectName || (data.ssid ? `Réseau : ${data.ssid}` : "WiFi non renseigné");
 
     case "contact":
-      return [data.firstName, data.lastName].filter(Boolean).join(" ") || data.name || "Contact vide";
+      return (
+        data.projectName ||
+        [data.firstName, data.lastName].filter(Boolean).join(" ") ||
+        "Contact vide"
+      );
 
     case "vcard":
       return (
-        data.name ||
-        [data.firstName, data.lastName].filter(Boolean).join(" ") ||
+        data.projectName ||
+        data.displayName ||
         data.headline ||
         "Carte profil"
       );
@@ -110,13 +114,19 @@ function getMainInfo(type: string, data: Record<string, any>) {
     case "pdf":
     case "image":
     case "audio":
-      return data.name || data.fileName || "Fichier";
+      return data.projectName || data.fileName || "Fichier";
 
     default:
-      return data.url || data.text || data.phone || data.email || data.name || "Contenu renseigné";
+      return (
+        data.projectName ||
+        data.url ||
+        data.text ||
+        data.phone ||
+        data.email ||
+        "Contenu renseigné"
+      );
   }
 }
-
 function isTrackableType(type: QrTypeId) {
   return [
     "url",
@@ -248,7 +258,7 @@ export function CreateQrForm({
       if (!user) throw new Error("Utilisateur non connecté.");
 
       const rawQrValue = buildQrValue(nextType, nextData);
-      const mainLabel = nextData.name || getMainInfo(nextType, nextData);
+      const mainLabel = nextData.projectName || getMainInfo(nextType, nextData);
       const qrMode = getQrMode(nextType);
 
       let finalId = savedQrId || qrId || null;
