@@ -39,6 +39,11 @@ export type QrDesignData = {
   errorCorrectionLevel: "L" | "M" | "Q" | "H";
   logoUrl: string | null;
   logoSize: number;
+
+  // ✅ NEW (yeux)
+  useCustomEyeColors: boolean;
+  eyeOuterColor: string;
+  eyeInnerColor: string;
 };
 
 type CreateQrDesignProps = {
@@ -59,6 +64,11 @@ const DEFAULT_DESIGN: QrDesignData = {
   errorCorrectionLevel: "M",
   logoUrl: null,
   logoSize: 0.4,
+
+  // NEW
+  useCustomEyeColors: false,
+  eyeOuterColor: "#000000",
+  eyeInnerColor: "#000000",
 };
 
 // -------------------- PREVIEW ICONS --------------------
@@ -118,6 +128,22 @@ function DotPreview({ type }: { type: string }) {
           </>
         )}
       </g>
+    </svg>
+  );
+}
+
+function EyeColorPreview({
+  outerColor,
+  innerColor,
+}: {
+  outerColor: string;
+  innerColor: string;
+}) {
+  return (
+    <svg width="42" height="42" viewBox="0 0 42 42" aria-hidden="true">
+      <rect x="4" y="4" width="34" height="34" rx="7" fill={outerColor} />
+      <rect x="10" y="10" width="22" height="22" rx="4" fill="#ffffff" />
+      <rect x="15" y="15" width="12" height="12" rx="2" fill={innerColor} />
     </svg>
   );
 }
@@ -214,6 +240,7 @@ export default function CreateQrDesign({
                 value={design.foreground}
                 onChange={(v) => updateField("foreground", v)}
               />
+
               {design.useGradient && (
                 <ColorBox
                   label="Couleur 2"
@@ -221,11 +248,79 @@ export default function CreateQrDesign({
                   onChange={(v) => updateField("gradientColor2", v)}
                 />
               )}
+
               <ColorBox
                 label="Arrière-plan"
                 value={design.background}
                 onChange={(v) => updateField("background", v)}
               />
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-white/5 bg-white/[0.02] p-4">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <span className="block text-[11px] font-bold uppercase tracking-widest text-white/40">
+                    Couleur des yeux
+                  </span>
+                  <span className="text-[10px] text-white/30">
+                    Personnaliser les coins du QR indépendamment du reste
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateField("useCustomEyeColors", !design.useCustomEyeColors)
+                  }
+                  className={`rounded-full px-3 py-1 text-[9px] font-bold transition-all ${
+                    design.useCustomEyeColors
+                      ? "bg-blue-500 text-white"
+                      : "bg-white/5 text-white/30"
+                  }`}
+                >
+                  {design.useCustomEyeColors ? "ACTIVÉ" : "DÉSACTIVÉ"}
+                </button>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-black/20">
+                  <EyeColorPreview
+                    outerColor={
+                      design.useCustomEyeColors
+                        ? design.eyeOuterColor
+                        : design.foreground
+                    }
+                    innerColor={
+                      design.useCustomEyeColors
+                        ? design.eyeInnerColor
+                        : design.foreground
+                    }
+                  />
+                </div>
+
+                <div className="flex flex-1 flex-wrap gap-4">
+                  <ColorBox
+                    label="Contour œil"
+                    value={
+                      design.useCustomEyeColors
+                        ? design.eyeOuterColor
+                        : design.foreground
+                    }
+                    onChange={(v) => updateField("eyeOuterColor", v)}
+                    disabled={!design.useCustomEyeColors}
+                  />
+                  <ColorBox
+                    label="Centre œil"
+                    value={
+                      design.useCustomEyeColors
+                        ? design.eyeInnerColor
+                        : design.foreground
+                    }
+                    onChange={(v) => updateField("eyeInnerColor", v)}
+                    disabled={!design.useCustomEyeColors}
+                  />
+                </div>
+              </div>
             </div>
           </section>
 
@@ -293,6 +388,60 @@ export default function CreateQrDesign({
               </div>
             </div>
           </section>
+
+          <section className="rounded-[28px] border border-white/5 bg-white/[0.02] p-6 shadow-xl">
+            <div className="mb-5 flex items-center gap-2 text-white/40">
+              <span className="text-[11px] font-bold uppercase tracking-widest">
+                Réglages avancés
+              </span>
+            </div>
+
+            <div className="space-y-5">
+              <CustomSlider
+                label="Marge"
+                value={design.margin}
+                min={0}
+                max={50}
+                unit="px"
+                onChange={(v) => updateField("margin", v)}
+              />
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase text-white/40">
+                    Correction d’erreur
+                  </span>
+                  <span className="text-[11px] font-black text-white">
+                    {design.errorCorrectionLevel}
+                  </span>
+                </div>
+
+                <select
+                  value={design.errorCorrectionLevel}
+                  onChange={(e) =>
+                    updateField(
+                      "errorCorrectionLevel",
+                      e.target.value as QrDesignData["errorCorrectionLevel"]
+                    )
+                  }
+                  className="h-12 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm text-white outline-none transition-colors focus:border-blue-500"
+                >
+                  <option value="L" className="bg-[#0b1220]">
+                    L — faible
+                  </option>
+                  <option value="M" className="bg-[#0b1220]">
+                    M — moyen
+                  </option>
+                  <option value="Q" className="bg-[#0b1220]">
+                    Q — élevé
+                  </option>
+                  <option value="H" className="bg-[#0b1220]">
+                    H — max
+                  </option>
+                </select>
+              </div>
+            </div>
+          </section>
         </div>
 
         <div className="space-y-6">
@@ -302,15 +451,31 @@ export default function CreateQrDesign({
               value={design.dotsStyle}
               onChange={(v: DotStyle) => updateField("dotsStyle", v)}
               options={[
-                { id: "square", label: "Square", node: <DotPreview type="square" /> },
-                { id: "dots", label: "Dots", node: <DotPreview type="dots" /> },
-                { id: "rounded", label: "Rounded", node: <DotPreview type="rounded" /> },
+                {
+                  id: "square",
+                  label: "Square",
+                  node: <DotPreview type="square" />,
+                },
+                {
+                  id: "dots",
+                  label: "Dots",
+                  node: <DotPreview type="dots" />,
+                },
+                {
+                  id: "rounded",
+                  label: "Rounded",
+                  node: <DotPreview type="rounded" />,
+                },
                 {
                   id: "extra-rounded",
                   label: "Extra rounded",
                   node: <DotPreview type="extra-rounded" />,
                 },
-                { id: "classy", label: "Classy", node: <DotPreview type="classy" /> },
+                {
+                  id: "classy",
+                  label: "Classy",
+                  node: <DotPreview type="classy" />,
+                },
                 {
                   id: "classy-rounded",
                   label: "Classy rounded",
@@ -327,23 +492,45 @@ export default function CreateQrDesign({
                 {
                   id: "square",
                   label: "Square",
-                  node: <div className="h-5 w-5 rounded-none border-[3px] border-[#666]" />,
+                  node: (
+                    <div className="h-5 w-5 rounded-none border-[3px] border-[#666]" />
+                  ),
                 },
                 {
                   id: "rounded",
                   label: "Rounded",
-                  node: <div className="h-5 w-5 rounded-md border-[3px] border-[#666]" />,
+                  node: (
+                    <div className="h-5 w-5 rounded-md border-[3px] border-[#666]" />
+                  ),
                 },
                 {
                   id: "extra-rounded",
                   label: "Extra",
-                  node: <div className="h-5 w-5 rounded-xl border-[3px] border-[#666]" />,
+                  node: (
+                    <div className="h-5 w-5 rounded-xl border-[3px] border-[#666]" />
+                  ),
+                },
+                {
+                  id: "classy",
+                  label: "Classy",
+                  node: (
+                    <div className="h-5 w-5 rounded-tl-xl rounded-br-xl border-[3px] border-[#666]" />
+                  ),
                 },
                 {
                   id: "classy-rounded",
-                  label: "Classy",
+                  label: "Classy rounded",
                   node: (
                     <div className="h-5 w-5 rounded-bl-lg rounded-tr-lg border-[3px] border-[#666]" />
+                  ),
+                },
+                {
+                  id: "dot",
+                  label: "Dot",
+                  node: (
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full border-[3px] border-[#666]">
+                      <div className="h-1.5 w-1.5 rounded-full bg-[#666]" />
+                    </div>
                   ),
                 },
               ]}
@@ -363,6 +550,7 @@ export default function CreateQrDesign({
 
         <div className="flex items-center gap-4">
           <button
+            type="button"
             onClick={resetDesign}
             className="rounded-2xl border border-white/10 bg-white/5 p-4 text-white/30 transition-all hover:bg-white/10 hover:text-white"
           >
@@ -388,10 +576,12 @@ function ColorBox({
   label,
   value,
   onChange,
+  disabled = false,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="min-w-[100px] flex-1 space-y-2">
@@ -401,8 +591,11 @@ function ColorBox({
       <input
         type="color"
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
-        className="h-12 w-full cursor-pointer rounded-xl border border-white/10 bg-black/40 p-1 transition-transform active:scale-95"
+        className={`h-12 w-full rounded-xl border border-white/10 bg-black/40 p-1 transition-transform active:scale-95 ${
+          disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"
+        }`}
       />
     </div>
   );

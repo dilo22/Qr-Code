@@ -193,6 +193,16 @@ export function buildQrOptions(
   const hasGradient = Boolean(design.useGradient);
   const safeMargin = getSafeMargin(design, size);
 
+  const foregroundColor = design.foreground || "#000000";
+  const eyeOuterColor =
+    design.useCustomEyeColors && design.eyeOuterColor
+      ? design.eyeOuterColor
+      : foregroundColor;
+  const eyeInnerColor =
+    design.useCustomEyeColors && design.eyeInnerColor
+      ? design.eyeInnerColor
+      : foregroundColor;
+
   return {
     width: size,
     height: size,
@@ -213,13 +223,13 @@ export function buildQrOptions(
 
     dotsOptions: {
       type: (design.dotsStyle as any) || "square",
-      color: hasGradient ? undefined : design.foreground || "#000000",
+      color: hasGradient ? undefined : foregroundColor,
       gradient: hasGradient
         ? {
             type: "linear" as const,
             rotation: Math.PI / 4,
             colorStops: [
-              { offset: 0, color: design.foreground || "#000000" },
+              { offset: 0, color: foregroundColor },
               { offset: 1, color: design.gradientColor2 || "#3b82f6" },
             ],
           }
@@ -228,12 +238,12 @@ export function buildQrOptions(
 
     cornersSquareOptions: {
       type: (design.cornersStyle as any) || "square",
-      color: design.foreground || "#000000",
+      color: eyeOuterColor,
     },
 
     cornersDotOptions: {
       type: (design.cornersStyle as any) || "square",
-      color: design.foreground || "#000000",
+      color: eyeInnerColor,
     },
 
     imageOptions: {
