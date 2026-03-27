@@ -330,16 +330,7 @@ export function QrDetailsAnalytics({ analytics }: Props) {
       </div>
 
       <SectionCard
-        title="Historique complet des scans"
-        subtitle="Tous les événements enregistrés, du plus récent au plus ancien"
-      >
-        {!analytics.hasVisitorTracking ? (
-          <div className="mb-4 rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-            Le statut Unique / Repeat n’est affiché correctement que si chaque scan stocke un
-            <span className="mx-1 font-semibold">visitor_key</span>.
-          </div>
-        ) : null}
-
+        title="Historique complet des scans">
         {analytics.scansHistory.length === 0 ? (
           <p className="text-sm text-white/45">Aucun scan pour le moment.</p>
         ) : (
