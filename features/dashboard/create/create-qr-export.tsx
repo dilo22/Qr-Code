@@ -85,9 +85,7 @@ export default function CreateQrExport({
               Le QR téléchargé reprend exactement la même donnée et le même rendu.
             </p>
             </div>
-            <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/10 p-3 text-left text-xs text-yellow-200 break-all">
-              <strong>QR value :</strong> {qrValue}
-            </div>
+            
 
             <div className="grid grid-cols-2 gap-4">
             {(["png", "svg", "jpeg", "webp"] as DownloadFormat[]).map((fmt) => (

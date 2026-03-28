@@ -196,7 +196,9 @@ export async function GET(
         `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
       );
     }
-
+    case "vcard": {
+      return NextResponse.redirect(`${baseUrl}/card/${row.id}`);
+    }
     case "sms": {
       if (!phone) {
         return NextResponse.json(
