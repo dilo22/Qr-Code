@@ -4,6 +4,27 @@ import { getAcceptedTypes, getTypeMeta } from "@/features/dashboard/create/lib/q
 import { uploadQrFile } from "@/features/dashboard/create/lib/qr-content.upload";
 import { inputClass } from "@/features/dashboard/create/lib/qr-content.styles";
 
+const FILE_LIMITS: Record<string, { maxBytes: number; mimeTypes: string[] }> = {
+  pdf:   { maxBytes: 10 * 1024 * 1024, mimeTypes: ["application/pdf"] },
+  image: { maxBytes: 5  * 1024 * 1024, mimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml"] },
+  audio: { maxBytes: 20 * 1024 * 1024, mimeTypes: ["audio/mpeg", "audio/mp3", "audio/wav", "audio/ogg", "audio/mp4", "audio/aac", "audio/x-m4a"] },
+};
+
+function validateFile(file: File, type: string): string | null {
+  const limits = FILE_LIMITS[type];
+  if (!limits) return null;
+
+  if (file.size > limits.maxBytes) {
+    return `Fichier trop volumineux — max ${formatFileSize(limits.maxBytes)}`;
+  }
+
+  if (limits.mimeTypes.length > 0 && !limits.mimeTypes.includes(file.type)) {
+    return `Format non accepté (${file.type || "inconnu"})`;
+  }
+
+  return null;
+}
+
 type Props = {
   type: string;
   form: Record<string, any>;
@@ -36,6 +57,14 @@ export default function HostedFileField({
             if (!file) return;
 
             setUploadError(null);
+
+            const validationError = validateFile(file, type);
+            if (validationError) {
+              setUploadError(validationError);
+              e.target.value = "";
+              return;
+            }
+
             setIsUploading(true);
 
             try {

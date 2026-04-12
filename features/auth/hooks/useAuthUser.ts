@@ -43,6 +43,8 @@ export function useAuthUser() {
         if (userError) {
           if (userError.message !== "Auth session missing!") {
             console.error("useAuthUser.getUser:", userError.message);
+            // Clear the invalid/expired session from local storage
+            await supabase.auth.signOut({ scope: "local" });
           }
           setUser(null);
         } else {

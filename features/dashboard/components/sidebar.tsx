@@ -24,7 +24,7 @@ function NavButton({
     <Link
       href={href}
       aria-label={label}
-      className={`group relative flex items-center justify-center w-14 h-14 rounded-2xl border transition-all duration-300 ${
+      className={`group relative flex items-center justify-center w-10 h-10 sm:w-14 sm:h-14 rounded-2xl border transition-all duration-300 ${
         active
           ? "bg-gradient-to-br from-cyan-400 to-fuchsia-500 text-black border-transparent shadow-[0_0_30px_rgba(34,211,238,0.25)] scale-105"
           : "bg-white/[0.03] border-white/10 text-white/45 hover:text-white hover:bg-white/[0.07] hover:border-white/20 hover:scale-105"
@@ -51,19 +51,19 @@ export function Sidebar({
   onLogout: () => void;
 }) {
   return (
-    <aside className="fixed left-0 top-0 bottom-0 z-50 w-28">
+    <aside className="fixed left-0 top-0 bottom-0 z-50 w-16 sm:w-28">
       <div className="absolute inset-0 bg-[#050816]/90 backdrop-blur-2xl border-r border-white/10" />
       <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-cyan-400/20 to-transparent" />
 
-      <div className="relative flex h-full flex-col items-center px-4 py-6">
+      <div className="relative flex h-full flex-col items-center px-2 sm:px-4 py-6">
         <Link
           href="/"
           aria-label="Retour à l'accueil"
           className="mb-8 group"
         >
-          <div className="relative flex items-center justify-center w-16 h-16 rounded-[1.6rem] bg-gradient-to-br from-cyan-400 via-sky-400 to-fuchsia-500 p-[1px] shadow-[0_0_35px_rgba(34,211,238,0.18)] transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3">
-            <div className="flex items-center justify-center w-full h-full rounded-[1.5rem] bg-[#060a14]">
-              <QrCode className="w-8 h-8 text-white" />
+          <div className="relative flex items-center justify-center w-10 h-10 sm:w-16 sm:h-16 rounded-[1.2rem] sm:rounded-[1.6rem] bg-gradient-to-br from-cyan-400 via-sky-400 to-fuchsia-500 p-[1px] shadow-[0_0_35px_rgba(34,211,238,0.18)] transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3">
+            <div className="flex items-center justify-center w-full h-full rounded-[1.1rem] sm:rounded-[1.5rem] bg-[#060a14]">
+              <QrCode className="w-5 h-5 sm:w-8 sm:h-8 text-white" />
             </div>
           </div>
         </Link>
@@ -99,7 +99,7 @@ export function Sidebar({
             onClick={onLogout}
             disabled={isSigningOut}
             aria-label="Se déconnecter"
-            className="group relative flex items-center justify-center w-14 h-14 rounded-2xl border border-white/10 bg-white/[0.03] text-white/45 transition-all duration-300 hover:text-red-400 hover:bg-red-500/10 hover:border-red-400/20 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+            className="group relative flex items-center justify-center w-10 h-10 sm:w-14 sm:h-14 rounded-2xl border border-white/10 bg-white/[0.03] text-white/45 transition-all duration-300 hover:text-red-400 hover:bg-red-500/10 hover:border-red-400/20 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
           >
             <LogOut className="w-5 h-5" />
 

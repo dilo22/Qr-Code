@@ -14,7 +14,7 @@ import PaymentForm from "@/features/dashboard/components/forms/PaymentForm";
 import PhoneForm from "@/features/dashboard/components/forms/PhoneForm";
 import SmsForm from "@/features/dashboard/components/forms/SmsForm";
 import TextForm from "@/features/dashboard/components/forms/TextForm";
-import UrlForm from "@/features/dashboard/components/forms/UrlForm";
+import UrlForm, { normalizeUrl } from "@/features/dashboard/components/forms/UrlForm";
 import VCardForm from "@/features/dashboard/components/forms/VCardForm";
 import WifiForm from "@/features/dashboard/components/forms/WifiForm";
 
@@ -45,6 +45,10 @@ export default function CreateQRContent({
   };
 
   const meta = getTypeMeta(type);
+
+  const URL_TYPES = ["url", "instagram", "facebook", "tiktok", "linkedin", "twitter", "youtube", "app", "review"];
+  const isUrlType = URL_TYPES.includes(type);
+  const isUrlValid = !isUrlType || (form.url && normalizeUrl(form.url) !== null);
 
   const sharedProps = {
     type,
@@ -142,8 +146,13 @@ export default function CreateQRContent({
         </button>
 
         <button
-          onClick={() => onNext(form)}
-          disabled={isUploading}
+          onClick={() => {
+            const finalForm = isUrlType && form.url
+              ? { ...form, url: normalizeUrl(form.url) ?? form.url }
+              : form;
+            onNext(finalForm);
+          }}
+          disabled={isUploading || !isUrlValid}
           className="flex items-center justify-center gap-2.5 rounded-xl bg-white px-7 py-3 text-sm font-black text-black transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(255,255,255,0.14)] disabled:cursor-not-allowed disabled:opacity-60"
         >
           Continuer <ArrowRight size={16} />

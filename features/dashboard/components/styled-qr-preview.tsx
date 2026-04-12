@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef } from "react";
 import QRCodeStyling from "qr-code-styling";
 import type { QrDesignData } from "@/features/dashboard/create/create-qr-design";
 import { buildQrOptions, QR_RENDER_SIZE } from "@/features/dashboard/lib/qr-utils";
@@ -17,10 +17,12 @@ export default function StyledQrPreview({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const qrInstanceRef = useRef<QRCodeStyling | null>(null);
 
+  const deferredData = useDeferredValue(data);
+  const deferredDesign = useDeferredValue(design);
+
   const qrOptions = useMemo(() => {
-    console.log("QR PREVIEW DATA =", data);
-    return buildQrOptions(data, design, QR_RENDER_SIZE);
-  }, [data, design]);
+    return buildQrOptions(deferredData, deferredDesign, QR_RENDER_SIZE);
+  }, [deferredData, deferredDesign]);
 
   useEffect(() => {
     if (!containerRef.current) return;

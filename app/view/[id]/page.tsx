@@ -65,7 +65,7 @@ export default async function ViewQrFilePage({
 
   const { data: qr, error } = await supabase
     .from("qr_codes")
-    .select("*")
+    .select("id, type, title, name, status, content")
     .eq("id", id)
     .maybeSingle();
 

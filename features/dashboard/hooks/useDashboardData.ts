@@ -6,6 +6,7 @@ import type { QRCodeItem, QRScanItem } from "@/features/dashboard/types/dashboar
 
 export function useDashboardData() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [projects, setProjects] = useState<QRCodeItem[]>([]);
   const [scans, setScans] = useState<QRScanItem[]>([]);
   const [profileName, setProfileName] = useState("Utilisateur");
@@ -20,6 +21,7 @@ export function useDashboardData() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
 
       const {
         data: { user },
@@ -84,9 +86,10 @@ export function useDashboardData() {
       }
 
       setScans((qrScans || []) as QRScanItem[]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur dashboard :", error);
       resetDashboardState();
+      setError(error?.message || "Impossible de charger les données.");
     } finally {
       setLoading(false);
     }
@@ -97,13 +100,7 @@ export function useDashboardData() {
   }, [loadData]);
 
   const deleteProject = useCallback(
-    async (projectId: string, projectName: string) => {
-      const confirmed = window.confirm(
-        `Supprimer définitivement "${projectName}" ? Cette action est irréversible.`
-      );
-
-      if (!confirmed) return false;
-
+    async (projectId: string) => {
       try {
         setDeletingId(projectId);
 
@@ -112,13 +109,8 @@ export function useDashboardData() {
           error: userError,
         } = await supabase.auth.getUser();
 
-        if (userError) {
-          throw userError;
-        }
-
-        if (!user) {
-          throw new Error("Utilisateur non connecté.");
-        }
+        if (userError) throw userError;
+        if (!user) throw new Error("Utilisateur non connecté.");
 
         const { error } = await supabase
           .from("qr_codes")
@@ -128,15 +120,12 @@ export function useDashboardData() {
 
         if (error) throw error;
 
-        setProjects((prev) =>
-          prev.filter((project) => project.id !== projectId)
-        );
-        setScans((prev) => prev.filter((scan) => scan.qr_code_id !== projectId));
+        setProjects((prev) => prev.filter((p) => p.id !== projectId));
+        setScans((prev) => prev.filter((s) => s.qr_code_id !== projectId));
 
         return true;
       } catch (error) {
         console.error("Erreur suppression QR code :", error);
-        window.alert("Impossible de supprimer ce QR code.");
         return false;
       } finally {
         setDeletingId(null);
@@ -147,6 +136,7 @@ export function useDashboardData() {
 
   return {
     loading,
+    error,
     projects,
     scans,
     profileName,

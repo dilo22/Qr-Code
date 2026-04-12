@@ -6,23 +6,32 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+function isValidId(id: string) {
+  return /^[0-9a-fA-F-]{36}$/.test(id);
+}
+
 function normalizeUrl(url: string | null | undefined) {
-  const value = String(url || "").trim();
+  const raw = String(url || "").trim();
+  if (!raw) return null;
 
-  if (!value) return null;
+  const candidate = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(raw)
+    ? raw
+    : `https://${raw}`;
 
-  if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(value)) {
-    return value;
+  try {
+    const parsed = new URL(candidate);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return null;
+    }
+    return parsed.toString();
+  } catch {
+    return null;
   }
-
-  return `https://${value}`;
 }
 
 function parsePayload(value: unknown) {
   if (!value) return {};
-
-  if (typeof value === "object") return value as Record<string, any>;
-
+  if (typeof value === "object") return value as Record<string, unknown>;
   if (typeof value === "string") {
     try {
       return JSON.parse(value);
@@ -30,7 +39,6 @@ function parsePayload(value: unknown) {
       return {};
     }
   }
-
   return {};
 }
 
@@ -40,36 +48,23 @@ export async function GET(
 ) {
   const { id } = await params;
 
-  const { data, error } = await supabase
-    .from("qr_codes")
-    .select("*")
-    .eq("id", id);
-
-  console.log("LOOKUP DEBUG:", { id, data, error });
-
-  const row = data?.[0] ?? null;
-
-  if (error || !row) {
-    return NextResponse.json(
-      {
-        error: "QR code introuvable",
-        id,
-        dbCount: data?.length ?? 0,
-        dbError: error ?? null,
-      },
-      { status: 404 }
-    );
+  if (!isValidId(id)) {
+    return NextResponse.json({ error: "Ressource introuvable" }, { status: 404 });
   }
 
-  console.log("QR row:", row);
+  const { data: row, error } = await supabase
+    .from("qr_codes")
+    .select("id,type,url,qr_data,content,payload,data,phone,email,subject,body,latitude,longitude,address,is_public,is_active")
+    .eq("id", id)
+    .eq("is_public", true)
+    .eq("is_active", true)
+    .maybeSingle();
 
-  const payload = parsePayload(
-    row.qr_data ??
-    row.content ??
-    row.payload ??
-    row.data
-  );
+  if (error || !row) {
+    return NextResponse.json({ error: "Ressource introuvable" }, { status: 404 });
+  }
 
+  const payload = parsePayload(row.qr_data ?? row.content ?? row.payload ?? row.data);
   const baseUrl = new URL(request.url).origin;
 
   const url = row.url ?? payload?.url ?? null;
@@ -91,25 +86,10 @@ export async function GET(
     case "youtube":
     case "app":
     case "review": {
-      const destination = normalizeUrl(url);
-
+      const destination = normalizeUrl(typeof url === "string" ? url : null);
       if (!destination) {
-        return NextResponse.json(
-          {
-            error: "Aucune destination trouvée",
-            id,
-            type: row.type,
-            dataUrl: row.url ?? null,
-            payloadUrl: payload?.url ?? null,
-            qr_data: row.qr_data ?? null,
-            content: row.content ?? null,
-            payload: row.payload ?? null,
-            dataField: row.data ?? null,
-          },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Ressource invalide" }, { status: 404 });
       }
-
       return NextResponse.redirect(destination);
     }
 
@@ -117,120 +97,49 @@ export async function GET(
     case "pdf":
     case "image":
     case "audio":
-    case "video": {
+    case "video":
       return NextResponse.redirect(`${baseUrl}/view/${row.id}`);
-    }
 
-    case "menu": {
+    case "menu":
       return NextResponse.redirect(`${baseUrl}/menu/${row.id}`);
-    }
 
-    case "location": {
+    case "vcard":
+      return NextResponse.redirect(`${baseUrl}/card/${row.id}`);
+
+    case "location":
       if (latitude && longitude) {
-        return NextResponse.redirect(
-          `https://www.google.com/maps?q=${latitude},${longitude}`
-        );
+        return NextResponse.redirect(`https://www.google.com/maps?q=${latitude},${longitude}`);
       }
-
       if (address) {
         return NextResponse.redirect(
-          `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+          `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(String(address))}`
         );
       }
+      return NextResponse.json({ error: "Ressource invalide" }, { status: 404 });
 
-      return NextResponse.json(
-        {
-          error: "Aucune destination trouvée",
-          id,
-          type: row.type,
-          latitude,
-          longitude,
-          address,
-          qr_data: row.qr_data ?? null,
-          content: row.content ?? null,
-          payload: row.payload ?? null,
-          dataField: row.data ?? null,
-        },
-        { status: 404 }
-      );
-    }
-
-    case "phone": {
+    case "phone":
       if (!phone) {
-        return NextResponse.json(
-          {
-            error: "Aucune destination trouvée",
-            id,
-            type: row.type,
-            phone: row.phone ?? payload?.phone ?? null,
-            qr_data: row.qr_data ?? null,
-            content: row.content ?? null,
-            payload: row.payload ?? null,
-            dataField: row.data ?? null,
-          },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Ressource invalide" }, { status: 404 });
       }
+      return NextResponse.redirect(`tel:${String(phone)}`);
 
-      return NextResponse.redirect(`tel:${phone}`);
-    }
-
-    case "email": {
+    case "email":
       if (!email) {
-        return NextResponse.json(
-          {
-            error: "Aucune destination trouvée",
-            id,
-            type: row.type,
-            email: row.email ?? payload?.email ?? null,
-            qr_data: row.qr_data ?? null,
-            content: row.content ?? null,
-            payload: row.payload ?? null,
-            dataField: row.data ?? null,
-          },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Ressource invalide" }, { status: 404 });
       }
-
       return NextResponse.redirect(
-        `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+        `mailto:${String(email)}?subject=${encodeURIComponent(String(subject))}&body=${encodeURIComponent(String(body))}`
       );
-    }
-    case "vcard": {
-      return NextResponse.redirect(`${baseUrl}/card/${row.id}`);
-    }
-    case "sms": {
+
+    case "sms":
       if (!phone) {
-        return NextResponse.json(
-          {
-            error: "Aucune destination trouvée",
-            id,
-            type: row.type,
-            phone: row.phone ?? payload?.phone ?? null,
-            body,
-            qr_data: row.qr_data ?? null,
-            content: row.content ?? null,
-            payload: row.payload ?? null,
-            dataField: row.data ?? null,
-          },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Ressource invalide" }, { status: 404 });
       }
-
       return NextResponse.redirect(
-        `sms:${phone}?body=${encodeURIComponent(body || payload?.message || "")}`
+        `sms:${String(phone)}?body=${encodeURIComponent(String(body || payload?.message || ""))}`
       );
-    }
 
-    default: {
-      return NextResponse.json(
-        {
-          error: "Type de QR non pris en charge",
-          id,
-          type: row.type,
-        },
-        { status: 400 }
-      );
-    }
+    default:
+      return NextResponse.json({ error: "Type non pris en charge" }, { status: 400 });
   }
 }
