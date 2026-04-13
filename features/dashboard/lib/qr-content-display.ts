@@ -186,24 +186,106 @@ function getFileSummary(content: Record<string, unknown>, type?: string | null):
 
 function getFallbackSummary(
   content: Record<string, unknown> | null,
-  type?: string | null,
+  _type?: string | null,
   qrValue?: string | null
 ): QrDisplaySummary {
+  const technicalKeys = new Set([
+    "menuData",
+    "storagePath",
+    "imagePath",
+    "mimeType",
+    "hostedUrl",
+    "publicUrl",
+    "avatarPath",
+    "coverImagePath",
+    "design",
+    "sections",
+    "featuredItems",
+    "items",
+    "logoUrl",
+    "content",
+  ]);
+
   if (!content) {
     return {
-      headline: qrValue ? normalizeUrl(qrValue) : type || "QR code",
+      headline: normalizeUrl(toText(qrValue)) || "Informations non renseignées",
       description: null,
-      fields: qrValue ? [{ label: "Valeur", value: qrValue }] : [],
+      fields: [],
     };
   }
 
-  const fields = Object.entries(content)
-    .map(([key, value]) => createField(key, Array.isArray(value) ? `${value.length} élément(s)` : value))
-    .filter(Boolean) as DisplayField[];
+  const pickHeadline = () =>
+    [
+      content.title,
+      content.name,
+      content.displayName,
+      content.label,
+      content.headline,
+      normalizeUrl(toText(content.url)),
+      normalizeUrl(toText(content.website)),
+      content.email,
+      content.phone,
+      content.address,
+      normalizeUrl(toText(qrValue)),
+    ]
+      .map((value) => toText(value))
+      .find(Boolean) || "Informations non renseignées";
+
+  const description =
+    toText(content.bio) ||
+    toText(content.description) ||
+    toText(content.body) ||
+    toText(content.summary) ||
+    null;
+
+  const fields: DisplayField[] = [];
+
+  const pushField = (label: string, value: unknown) => {
+    const field = createField(label, value);
+    if (field && !fields.some((item) => item.label === field.label && item.value === field.value)) {
+      fields.push(field);
+    }
+  };
+
+  pushField("Nom", content.title || content.name || content.displayName || content.label);
+  pushField("Sous-titre", content.headline);
+  pushField("Site web", normalizeUrl(toText(content.url) || toText(content.website)));
+  pushField("Email", content.email);
+  pushField("Téléphone", content.phone);
+  pushField("Adresse", content.address);
+
+  for (const [key, value] of Object.entries(content)) {
+    if (technicalKeys.has(key)) continue;
+    if (value === null || value === undefined || value === "") continue;
+    if (["title", "name", "displayName", "label", "headline", "url", "website", "email", "phone", "address", "bio", "description", "body", "summary"].includes(key)) {
+      continue;
+    }
+
+    if (Array.isArray(value) && value.length > 0) {
+      if (key === "links") {
+        pushField("Liens", `${value.length} liens`);
+      } else if (key === "sections") {
+        pushField("Sections", `${value.length} sections`);
+      } else {
+        pushField("Éléments", `${value.length} éléments`);
+      }
+      continue;
+    }
+
+    if (value && typeof value === "object") {
+      const filledCount = Object.values(value as Record<string, unknown>).filter(
+        (item) => item !== null && item !== undefined && item !== ""
+      ).length;
+
+      if (filledCount > 0) {
+        pushField("Informations", `${filledCount} éléments`);
+      }
+    }
+  }
 
   return {
-    headline: type || "QR code",
-    description: null,
+    headline: pickHeadline(),
+    description,
     fields: fields.slice(0, 6),
   };
 }
