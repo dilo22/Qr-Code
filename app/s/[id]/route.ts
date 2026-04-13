@@ -30,16 +30,18 @@ function normalizeUrl(url: string | null | undefined) {
   }
 }
 
-function parsePayload(value: unknown) {
+function parseContent(value: unknown) {
   if (!value) return {};
   if (typeof value === "object") return value as Record<string, unknown>;
+
   if (typeof value === "string") {
     try {
-      return JSON.parse(value);
+      return JSON.parse(value) as Record<string, unknown>;
     } catch {
       return {};
     }
   }
+
   return {};
 }
 
@@ -80,6 +82,98 @@ async function trackScan(request: Request, qrCodeId: string) {
   }
 }
 
+function getString(value: unknown) {
+  const text = String(value || "").trim();
+  return text || null;
+}
+
+function resolveDestination(
+  row: { id: string; type: string | null; content: string | null; qr_value: string | null },
+  request: Request
+) {
+  const payload = parseContent(row.content);
+  const baseUrl = new URL(request.url).origin;
+  const type = String(row.type || "").toLowerCase();
+
+  const directUrl = normalizeUrl(
+    getString(payload.url) ||
+      getString(payload.fileUrl) ||
+      getString(payload.publicUrl) ||
+      getString(payload.hostedUrl) ||
+      row.content
+  );
+
+  const fallbackQrValue = normalizeUrl(row.qr_value);
+  switch (type) {
+    case "url":
+    case "instagram":
+    case "facebook":
+    case "tiktok":
+    case "linkedin":
+    case "twitter":
+    case "youtube":
+    case "app":
+    case "review":
+      return directUrl || fallbackQrValue;
+
+    case "file":
+    case "pdf":
+    case "image":
+    case "audio":
+    case "video":
+      return `${baseUrl}/view/${row.id}`;
+
+    case "menu":
+      return `${baseUrl}/menu/${row.id}`;
+
+    case "vcard":
+      return `${baseUrl}/card/${row.id}`;
+
+    case "location": {
+      const latitude = getString(payload.latitude);
+      const longitude = getString(payload.longitude);
+      const address = getString(payload.address);
+
+      if (latitude && longitude) {
+        return `https://www.google.com/maps?q=${latitude},${longitude}`;
+      }
+
+      if (address) {
+        return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+      }
+
+      return null;
+    }
+
+    case "phone": {
+      const phone = getString(payload.phone);
+      return phone ? `tel:${phone}` : null;
+    }
+
+    case "email": {
+      const email = getString(payload.email);
+      const subject = getString(payload.subject) || "";
+      const body = getString(payload.body) || "";
+
+      if (!email) return null;
+
+      return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+
+    case "sms": {
+      const phone = getString(payload.phone);
+      const body = getString(payload.message) || getString(payload.body) || "";
+
+      if (!phone) return null;
+
+      return `sms:${phone}?body=${encodeURIComponent(body)}`;
+    }
+
+    default:
+      return directUrl || fallbackQrValue;
+  }
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -92,11 +186,16 @@ export async function GET(
 
   const { data: row, error } = await supabase
     .from("qr_codes")
-    .select("id,type,url,qr_data,content,payload,data,phone,email,subject,body,latitude,longitude,address,status")
+    .select("id, type, content, qr_value, status")
     .eq("id", id)
     .maybeSingle();
 
-  if (error || !row) {
+  if (error) {
+    console.error("Erreur récupération QR code :", error);
+    return NextResponse.json({ error: "Ressource introuvable" }, { status: 404 });
+  }
+
+  if (!row) {
     return NextResponse.json({ error: "Ressource introuvable" }, { status: 404 });
   }
 
@@ -104,84 +203,13 @@ export async function GET(
     return NextResponse.json({ error: "Ressource introuvable" }, { status: 404 });
   }
 
-  const payload = parsePayload(row.qr_data ?? row.content ?? row.payload ?? row.data);
-  const baseUrl = new URL(request.url).origin;
+  const destination = resolveDestination(row, request);
+
+  if (!destination) {
+    return NextResponse.json({ error: "Ressource invalide" }, { status: 404 });
+  }
 
   await trackScan(request, row.id);
 
-  const url = row.url ?? payload?.url ?? null;
-  const phone = row.phone ?? payload?.phone ?? null;
-  const email = row.email ?? payload?.email ?? null;
-  const subject = row.subject ?? payload?.subject ?? "";
-  const body = row.body ?? payload?.body ?? "";
-  const latitude = row.latitude ?? payload?.latitude ?? null;
-  const longitude = row.longitude ?? payload?.longitude ?? null;
-  const address = row.address ?? payload?.address ?? null;
-
-  switch (row.type) {
-    case "url":
-    case "instagram":
-    case "facebook":
-    case "tiktok":
-    case "linkedin":
-    case "twitter":
-    case "youtube":
-    case "app":
-    case "review": {
-      const destination = normalizeUrl(typeof url === "string" ? url : null);
-      if (!destination) {
-        return NextResponse.json({ error: "Ressource invalide" }, { status: 404 });
-      }
-      return NextResponse.redirect(destination);
-    }
-
-    case "file":
-    case "pdf":
-    case "image":
-    case "audio":
-    case "video":
-      return NextResponse.redirect(`${baseUrl}/view/${row.id}`);
-
-    case "menu":
-      return NextResponse.redirect(`${baseUrl}/menu/${row.id}`);
-
-    case "vcard":
-      return NextResponse.redirect(`${baseUrl}/card/${row.id}`);
-
-    case "location":
-      if (latitude && longitude) {
-        return NextResponse.redirect(`https://www.google.com/maps?q=${latitude},${longitude}`);
-      }
-      if (address) {
-        return NextResponse.redirect(
-          `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(String(address))}`
-        );
-      }
-      return NextResponse.json({ error: "Ressource invalide" }, { status: 404 });
-
-    case "phone":
-      if (!phone) {
-        return NextResponse.json({ error: "Ressource invalide" }, { status: 404 });
-      }
-      return NextResponse.redirect(`tel:${String(phone)}`);
-
-    case "email":
-      if (!email) {
-        return NextResponse.json({ error: "Ressource invalide" }, { status: 404 });
-      }
-      return NextResponse.redirect(
-        `mailto:${String(email)}?subject=${encodeURIComponent(String(subject))}&body=${encodeURIComponent(String(body))}`
-      );
-
-    case "sms":
-      if (!phone) {
-        return NextResponse.json({ error: "Ressource invalide" }, { status: 404 });
-      }
-      return NextResponse.redirect(
-        `sms:${String(phone)}?body=${encodeURIComponent(String(body || payload?.message || ""))}`
-      );
-
-    default:
-      return NextResponse.json({ error: "Type non pris en charge" }, { status: 400 });
-  }
+  return NextResponse.redirect(destination);
 }
