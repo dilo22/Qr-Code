@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createHash } from "node:crypto";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -42,6 +43,43 @@ function parsePayload(value: unknown) {
   return {};
 }
 
+function detectDevice(userAgent: string | null) {
+  const value = (userAgent || "").toLowerCase();
+
+  if (!value) return null;
+  if (/tablet|ipad/.test(value)) return "tablet";
+  if (/mobi|android|iphone/.test(value)) return "mobile";
+  return "desktop";
+}
+
+function buildVisitorKey(ip: string | null, userAgent: string | null) {
+  const source = `${ip || "unknown"}|${userAgent || "unknown"}`;
+  return createHash("sha256").update(source).digest("hex");
+}
+
+async function trackScan(request: Request, qrCodeId: string) {
+  try {
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const ip = forwardedFor?.split(",")[0]?.trim() || request.headers.get("x-real-ip");
+    const userAgent = request.headers.get("user-agent");
+
+    const { error } = await supabase.from("qr_scans").insert({
+      qr_code_id: qrCodeId,
+      scanned_at: new Date().toISOString(),
+      country: request.headers.get("x-vercel-ip-country"),
+      city: request.headers.get("x-vercel-ip-city"),
+      device: detectDevice(userAgent),
+      visitor_key: buildVisitorKey(ip, userAgent),
+    });
+
+    if (error) {
+      console.error("Impossible d'enregistrer le scan :", error);
+    }
+  } catch (error) {
+    console.error("Erreur tracking scan :", error);
+  }
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -54,18 +92,22 @@ export async function GET(
 
   const { data: row, error } = await supabase
     .from("qr_codes")
-    .select("id,type,url,qr_data,content,payload,data,phone,email,subject,body,latitude,longitude,address,is_public,is_active")
+    .select("id,type,url,qr_data,content,payload,data,phone,email,subject,body,latitude,longitude,address,status")
     .eq("id", id)
-    .eq("is_public", true)
-    .eq("is_active", true)
     .maybeSingle();
 
   if (error || !row) {
     return NextResponse.json({ error: "Ressource introuvable" }, { status: 404 });
   }
 
+  if ((row.status || "active").toLowerCase() !== "active") {
+    return NextResponse.json({ error: "Ressource introuvable" }, { status: 404 });
+  }
+
   const payload = parsePayload(row.qr_data ?? row.content ?? row.payload ?? row.data);
   const baseUrl = new URL(request.url).origin;
+
+  await trackScan(request, row.id);
 
   const url = row.url ?? payload?.url ?? null;
   const phone = row.phone ?? payload?.phone ?? null;

@@ -4,9 +4,9 @@ export function HomeAnalytics() {
   return (
     <section
       id="analytics"
-      className="py-16 md:py-20 px-5 max-w-7xl mx-auto"
+      className="py-10 md:py-20 px-5 max-w-7xl mx-auto"
     >
-      <div className="text-center space-y-3 mb-12">
+      <div className="text-center space-y-3 mb-8 md:mb-12">
         <h2 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter">
           Analytics Temps Réel
         </h2>
@@ -16,8 +16,8 @@ export function HomeAnalytics() {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-5">
-        <GlassCard>
+      <div className="-mx-5 flex gap-4 overflow-x-auto px-5 pb-3 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:pb-0 md:px-0 snap-x snap-mandatory md:snap-none">
+        <GlassCard className="min-w-[220px] shrink-0 snap-start md:min-w-0 md:shrink">
           <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">
             Scans du jour
           </p>
@@ -25,7 +25,7 @@ export function HomeAnalytics() {
           <p className="text-cyan-400 text-xs mt-2">+18% vs hier</p>
         </GlassCard>
 
-        <GlassCard>
+        <GlassCard className="min-w-[220px] shrink-0 snap-start md:min-w-0 md:shrink">
           <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">
             Taux d’engagement
           </p>
@@ -33,7 +33,7 @@ export function HomeAnalytics() {
           <p className="text-fuchsia-400 text-xs mt-2">Sur vos QR dynamiques</p>
         </GlassCard>
 
-        <GlassCard>
+        <GlassCard className="min-w-[220px] shrink-0 snap-start md:min-w-0 md:shrink">
           <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-2">
             Profils actifs
           </p>

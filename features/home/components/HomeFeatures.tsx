@@ -8,7 +8,7 @@ export function HomeFeatures({ onCardClick }: HomeFeaturesProps) {
   return (
     <section
       id="features"
-      className="relative py-20 md:py-24 px-5 max-w-7xl mx-auto"
+      className="relative py-10 md:py-24 px-5 max-w-7xl mx-auto"
     >
       {/* Fond intégré à la page, sans panneau global */}
       <div className="absolute inset-0 pointer-events-none">
@@ -31,7 +31,7 @@ export function HomeFeatures({ onCardClick }: HomeFeaturesProps) {
         ))}
       </div>
 
-      <div className="relative z-10 mb-12 md:mb-14 text-center space-y-3">
+      <div className="relative z-10 mb-8 md:mb-14 text-center space-y-3">
         <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/[0.04] text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">
           Protocoles QR Code
         </span>
@@ -46,7 +46,7 @@ export function HomeFeatures({ onCardClick }: HomeFeaturesProps) {
         </p>
       </div>
 
-      <div className="relative z-10 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+      <div className="relative z-10 -mx-5 flex gap-3 overflow-x-auto px-5 pb-3 md:mx-0 md:grid md:grid-cols-3 md:gap-5 md:overflow-visible md:pb-0 md:px-0 xl:grid-cols-4 snap-x snap-mandatory md:snap-none">
         {qrTypes.map((type) => {
           const colors = accentStyles[type.accent];
           const Icon = type.icon;
@@ -55,7 +55,7 @@ export function HomeFeatures({ onCardClick }: HomeFeaturesProps) {
             <button
               key={type.id}
               onClick={onCardClick}
-              className="group relative min-h-[150px] md:min-h-[164px] rounded-[1.45rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] text-left overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
+              className="group relative min-h-[150px] w-[148px] shrink-0 snap-start md:w-auto md:shrink md:min-h-[164px] rounded-[1.45rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] text-left overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-white/20"
             >
               <div
                 className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br ${colors.from}/[0.10] ${colors.to}/[0.04]`}

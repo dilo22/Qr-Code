@@ -123,7 +123,7 @@ export function HomeHero({
   onScrollToSection,
 }: HomeHeroProps) {
   return (
-    <section className="px-5 pb-16 pt-32 md:pt-36">
+    <section className="px-5 pb-10 pt-24 md:pb-16 md:pt-36">
       <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-2 md:gap-14">
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 backdrop-blur-sm">
@@ -162,7 +162,9 @@ export function HomeHero({
           </div>
         </div>
 
-        <HeroQrBlock isMounted={isMounted} onAuthClick={onAuthClick} />
+        <div className="hidden lg:block">
+          <HeroQrBlock isMounted={isMounted} onAuthClick={onAuthClick} />
+        </div>
       </div>
     </section>
   );

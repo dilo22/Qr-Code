@@ -4,7 +4,7 @@ type HomeCTAProps = {
 
 export function HomeCTA({ onAuthClick }: HomeCTAProps) {
   return (
-    <section className="py-20 md:py-24 px-5">
+    <section className="py-10 md:py-24 px-5">
       <div className="max-w-5xl mx-auto relative rounded-[2.5rem] bg-gradient-to-br from-cyan-600 to-fuchsia-700 p-1 shadow-2xl transition-transform hover:scale-[1.01] duration-700">
         <div className="bg-[#02040a] rounded-[2.35rem] p-8 md:p-12 text-center space-y-7 relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[420px] h-[220px] bg-cyan-500/20 blur-[100px] rounded-full" />
