@@ -1,4 +1,4 @@
-HomeAnimationsStyle() {
+export function HomeAnimationsStyle() {
   return (
     <style
       dangerouslySetInnerHTML={{
