@@ -3,7 +3,11 @@
 import { useDeferredValue, useEffect, useMemo, useRef } from "react";
 import QRCodeStyling from "qr-code-styling";
 import type { QrDesignData } from "@/features/dashboard/create/create-qr-design";
-import { buildQrOptions, QR_RENDER_SIZE } from "@/features/dashboard/lib/qr-utils";
+import {
+  buildQrOptions,
+  getEffectiveBackgroundColor,
+  QR_RENDER_SIZE,
+} from "@/features/dashboard/lib/qr-utils";
 
 type StyledQrPreviewProps = {
   data: string;
@@ -23,6 +27,11 @@ export default function StyledQrPreview({
   const qrOptions = useMemo(() => {
     return buildQrOptions(deferredData, deferredDesign, QR_RENDER_SIZE);
   }, [deferredData, deferredDesign]);
+
+  const previewBackground = useMemo(
+    () => getEffectiveBackgroundColor(deferredDesign),
+    [deferredDesign]
+  );
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -72,8 +81,21 @@ export default function StyledQrPreview({
   return (
     <div
       className="relative mx-auto h-[300px] w-[300px] overflow-hidden rounded-3xl border border-white/10 shadow-2xl"
-      style={{ backgroundColor: design.background || "#ffffff" }}
     >
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundColor: "#f8fafc",
+          backgroundImage:
+            "linear-gradient(45deg, rgba(15,23,42,0.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(15,23,42,0.08) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(15,23,42,0.08) 75%), linear-gradient(-45deg, transparent 75%, rgba(15,23,42,0.08) 75%)",
+          backgroundSize: "24px 24px",
+          backgroundPosition: "0 0, 0 12px, 12px -12px, -12px 0",
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{ backgroundColor: previewBackground === "transparent" ? "transparent" : previewBackground }}
+      />
       <div
         ref={containerRef}
         className="absolute inset-0"

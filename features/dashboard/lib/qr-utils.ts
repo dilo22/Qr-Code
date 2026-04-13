@@ -2,6 +2,37 @@ import type { QrDesignData } from "@/features/dashboard/create/create-qr-design"
 
 export const QR_RENDER_SIZE = 1024;
 
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function hexToRgb(hex: string) {
+  const sanitized = hex.replace("#", "").trim();
+  if (!/^[0-9a-fA-F]{6}$/.test(sanitized)) return null;
+
+  return {
+    r: parseInt(sanitized.slice(0, 2), 16),
+    g: parseInt(sanitized.slice(2, 4), 16),
+    b: parseInt(sanitized.slice(4, 6), 16),
+  };
+}
+
+export function getEffectiveBackgroundColor(design: Partial<QrDesignData>) {
+  if (design.transparentBackground) {
+    return "transparent";
+  }
+
+  const background = design.background || "#ffffff";
+  const alpha = clamp(Number(design.backgroundAlpha ?? 100), 0, 100);
+
+  if (alpha >= 100) return background;
+
+  const rgb = hexToRgb(background);
+  if (!rgb) return background;
+
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha / 100})`;
+}
+
 /**
  * Nettoie une chaîne simple.
  */
@@ -207,6 +238,9 @@ export function buildQrOptions(
     design.useCustomEyeColors && design.eyeInnerColor
       ? design.eyeInnerColor
       : foregroundColor;
+  const gradientRotation = Number.isFinite(design.gradientRotation)
+    ? Number(design.gradientRotation)
+    : 45;
 
   return {
     width: size,
@@ -223,7 +257,7 @@ export function buildQrOptions(
     },
 
     backgroundOptions: {
-      color: design.background || "#ffffff",
+      color: getEffectiveBackgroundColor(design),
     },
 
     dotsOptions: {
@@ -232,7 +266,7 @@ export function buildQrOptions(
       gradient: hasGradient
         ? {
             type: "linear" as const,
-            rotation: Math.PI / 4,
+            rotation: (gradientRotation * Math.PI) / 180,
             colorStops: [
               { offset: 0, color: foregroundColor },
               { offset: 1, color: design.gradientColor2 || "#3b82f6" },
