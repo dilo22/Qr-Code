@@ -18,6 +18,7 @@ export type QRCodeItem = {
   qr_mode?: "dynamic" | "static" | null;
   status?: string | null;
   content?: unknown;
+  qr_value?: string | null;
   design?: unknown;
   created_at: string;
   updated_at: string;

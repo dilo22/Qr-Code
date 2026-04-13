@@ -13,10 +13,8 @@ import { useRouter } from "next/navigation";
 
 import { useQrDetails } from "@/features/dashboard/hooks/useQrDetails";
 import { buildQrAnalytics } from "@/features/dashboard/lib/qr-details.analytics";
-import {
-  formatDate,
-  getPreviewValue,
-} from "@/features/dashboard/lib/qr-details.helpers";
+import { formatDate, getPreviewValue } from "@/features/dashboard/lib/qr-details.helpers";
+import { getQrDisplayPrimaryValue } from "@/features/dashboard/lib/qr-content-display";
 
 import { InfoCard } from "@/features/dashboard/components/ui/InfoCard";
 import { PreviewQR } from "@/features/dashboard/components/qr-details/PreviewQR";
@@ -67,9 +65,7 @@ export default function QRDetailsView({ qrId }: Props) {
     if (!qr) return;
 
     const nextAction = qr.status === "active" ? "désactiver" : "activer";
-    const confirmed = window.confirm(
-      `Voulez-vous vraiment ${nextAction} ce QR code ?`
-    );
+    const confirmed = window.confirm(`Voulez-vous vraiment ${nextAction} ce QR code ?`);
 
     if (!confirmed) return;
 
@@ -137,8 +133,12 @@ export default function QRDetailsView({ qrId }: Props) {
             />
             <InfoCard
               icon={<Palette className="h-4 w-4 text-purple-400" />}
-              label="Valeur encodée"
-              value={<span className="break-all">{getPreviewValue(qr)}</span>}
+              label="Résumé encodé"
+              value={
+                <span className="break-words">
+                  {getQrDisplayPrimaryValue(qr.type, qr.content, qr.qr_value || getPreviewValue(qr))}
+                </span>
+              }
             />
           </div>
         </div>
@@ -187,7 +187,7 @@ export default function QRDetailsView({ qrId }: Props) {
             )}
           </div>
 
-          <QRContentDetails content={qr.content} />
+          <QRContentDetails type={qr.type} content={qr.content} qrValue={qr.qr_value} />
         </div>
       </div>
     </div>
