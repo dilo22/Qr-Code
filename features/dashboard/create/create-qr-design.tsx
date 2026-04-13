@@ -396,10 +396,10 @@ export default function CreateQrDesign({
                   }
                 />
 
-                <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_180px]">
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
                   <ColorBox
                     label="Couleur de fond"
-                    hint="Visible dans l'aperçu et dans l'export si le fond n'est pas totalement transparent."
+                    hint="Visible dans l'aperçu et à l'export si le fond reste actif."
                     value={design.background}
                     onChange={(v) => updateField("background", v)}
                   />
@@ -440,7 +440,7 @@ export default function CreateQrDesign({
                   />
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-[120px_minmax(0,1fr)]">
+                <div className="grid gap-4 lg:grid-cols-[120px_minmax(0,1fr)]">
                   <div className="flex h-[116px] items-center justify-center rounded-2xl border border-white/10 bg-black/20">
                     <EyeColorPreview
                       outerColor={design.useCustomEyeColors ? design.eyeOuterColor : design.foreground}
@@ -448,10 +448,10 @@ export default function CreateQrDesign({
                     />
                   </div>
 
-                  <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="min-w-0 space-y-4">
                     <ColorBox
                       label="Couleur des yeux"
-                      hint="Applique la même teinte au contour et au centre."
+                      hint="Synchronise contour et centre."
                       value={design.useCustomEyeColors ? design.eyeOuterColor : design.foreground}
                       onChange={(v) => {
                         updateField("eyeOuterColor", v);
@@ -459,18 +459,20 @@ export default function CreateQrDesign({
                       }}
                       disabled={!design.useCustomEyeColors}
                     />
-                    <ColorBox
-                      label="Contour œil"
-                      value={design.useCustomEyeColors ? design.eyeOuterColor : design.foreground}
-                      onChange={(v) => updateField("eyeOuterColor", v)}
-                      disabled={!design.useCustomEyeColors}
-                    />
-                    <ColorBox
-                      label="Centre œil"
-                      value={design.useCustomEyeColors ? design.eyeInnerColor : design.foreground}
-                      onChange={(v) => updateField("eyeInnerColor", v)}
-                      disabled={!design.useCustomEyeColors}
-                    />
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <ColorBox
+                        label="Contour œil"
+                        value={design.useCustomEyeColors ? design.eyeOuterColor : design.foreground}
+                        onChange={(v) => updateField("eyeOuterColor", v)}
+                        disabled={!design.useCustomEyeColors}
+                      />
+                      <ColorBox
+                        label="Centre œil"
+                        value={design.useCustomEyeColors ? design.eyeInnerColor : design.foreground}
+                        onChange={(v) => updateField("eyeInnerColor", v)}
+                        disabled={!design.useCustomEyeColors}
+                      />
+                    </div>
                   </div>
                 </div>
               </SettingGroup>
@@ -802,13 +804,13 @@ function SegmentedControl({
             key={option.id}
             type="button"
             onClick={() => onChange(option.id)}
-            className={`rounded-xl px-3 py-3 text-xs font-black uppercase tracking-[0.16em] transition ${
+            className={`min-w-0 rounded-xl px-2.5 py-3 text-[11px] font-black uppercase tracking-[0.1em] transition ${
               value === option.id
                 ? "bg-white text-black shadow-[0_8px_20px_rgba(255,255,255,0.12)]"
                 : "text-white/45 hover:bg-white/[0.05] hover:text-white/80"
             }`}
           >
-            {option.label}
+            <span className="block truncate">{option.label}</span>
           </button>
         ))}
       </div>
@@ -910,25 +912,31 @@ function ColorBox({
   hint?: string;
 }) {
   return (
-    <div className="min-w-[100px] flex-1 space-y-2">
-      <span className="ml-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/30">
+    <div className="min-w-0 flex-1 space-y-2">
+      <span className="ml-1 block text-[10px] font-black uppercase tracking-[0.14em] text-white/30">
         {label}
       </span>
-      <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/30 p-3">
-        <input
-          type="color"
-          value={value}
-          disabled={disabled}
-          onChange={(e) => onChange(e.target.value)}
-          className={`h-12 w-14 rounded-xl border border-white/10 bg-black/40 p-1 transition-transform active:scale-95 ${
-            disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"
-          }`}
-        />
-        <div className="min-w-0">
-          <p className="text-sm font-bold text-white/80">{value}</p>
-          {hint ? <p className="mt-1 text-xs leading-5 text-white/40">{hint}</p> : null}
+      <div className="min-w-0 rounded-2xl border border-white/10 bg-black/30 p-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <input
+            type="color"
+            value={value}
+            disabled={disabled}
+            onChange={(e) => onChange(e.target.value)}
+            className={`h-12 w-14 shrink-0 rounded-xl border border-white/10 bg-black/40 p-1 transition-transform active:scale-95 ${
+              disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer"
+            }`}
+          />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-white/80">{value}</p>
+          </div>
         </div>
-      </div>
+        {hint ? (
+          <p className="mt-2 pl-[68px] text-xs leading-5 text-white/40">
+            {hint}
+          </p>
+        ) : null}
+        </div>
     </div>
   );
 }
