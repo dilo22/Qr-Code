@@ -308,8 +308,8 @@ export default function CreateQrDesign({
   };
 
   return (
-    <div className="w-full space-y-6 pb-10 animate-in fade-in zoom-in-95 duration-500">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <div className="animate-in w-full space-y-8 pb-10 fade-in zoom-in-95 duration-500">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] 2xl:gap-7">
         <div className="space-y-6">
           <section className="rounded-[28px] border border-white/5 bg-white/[0.02] p-6 backdrop-blur-xl shadow-xl">
             <div className="mb-6 flex items-center justify-between">
@@ -505,124 +505,6 @@ export default function CreateQrDesign({
             </div>
           </section>
 
-          <section className="rounded-[28px] border border-white/5 bg-white/[0.02] p-6 shadow-xl">
-            <div className="mb-5 flex items-center gap-2 text-white/40">
-              <ImageIcon size={16} />
-              <span className="text-[11px] font-bold uppercase tracking-widest">
-                Logo & branding
-              </span>
-            </div>
-
-            <div className="flex items-center gap-5">
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex h-20 w-20 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 border-dashed border-white/10 transition-all hover:border-white/20 hover:bg-white/5"
-                >
-                  {design.logoUrl ? (
-                    <img
-                      src={design.logoUrl}
-                      className="h-full w-full object-contain p-2"
-                      alt="Logo"
-                    />
-                  ) : (
-                    <>
-                      <Plus size={20} className="text-white/20" />
-                      <span className="text-[8px] font-bold text-white/20">
-                        AJOUTER
-                      </span>
-                    </>
-                  )}
-                </button>
-
-                {design.logoUrl && (
-                  <button
-                    type="button"
-                    onClick={handleRemoveLogo}
-                    className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border border-red-400/30 bg-red-500/90 text-white shadow-lg transition-all hover:scale-105 hover:bg-red-400"
-                    aria-label="Supprimer le logo"
-                    title="Supprimer le logo"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
-              </div>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={handleLogoUpload}
-                className="hidden"
-                accept="image/*"
-              />
-
-              <div className="flex-1 space-y-4">
-                <CustomSlider
-                  label="Taille du logo"
-                  value={Math.round(design.logoSize * 100)}
-                  min={10}
-                  max={50}
-                  unit="%"
-                  onChange={(v) => updateField("logoSize", v / 100)}
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-[28px] border border-white/5 bg-white/[0.02] p-6 shadow-xl">
-            <div className="mb-5 flex items-center gap-2 text-white/40">
-              <span className="text-[11px] font-bold uppercase tracking-widest">
-                Réglages avancés
-              </span>
-            </div>
-
-            <div className="space-y-5">
-              <CustomSlider
-                label="Marge"
-                value={design.margin}
-                min={0}
-                max={50}
-                unit="px"
-                onChange={(v) => updateField("margin", v)}
-              />
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase text-white/40">
-                    Correction d’erreur
-                  </span>
-                  <span className="text-[11px] font-black text-white">
-                    {design.errorCorrectionLevel}
-                  </span>
-                </div>
-
-                <select
-                  value={design.errorCorrectionLevel}
-                  onChange={(e) =>
-                    updateField(
-                      "errorCorrectionLevel",
-                      e.target.value as QrDesignData["errorCorrectionLevel"]
-                    )
-                  }
-                  className="h-12 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm text-white outline-none transition-colors focus:border-blue-500"
-                >
-                  <option value="L" className="bg-[#0b1220]">
-                    L — faible
-                  </option>
-                  <option value="M" className="bg-[#0b1220]">
-                    M — moyen
-                  </option>
-                  <option value="Q" className="bg-[#0b1220]">
-                    Q — élevé
-                  </option>
-                  <option value="H" className="bg-[#0b1220]">
-                    H — max
-                  </option>
-                </select>
-              </div>
-            </div>
-          </section>
         </div>
 
         <div className="space-y-6">
@@ -716,6 +598,129 @@ export default function CreateQrDesign({
                 },
               ]}
             />
+          </section>
+
+          <section className="rounded-[28px] border border-white/5 bg-white/[0.02] p-6 shadow-xl">
+            <div className="mb-5 flex items-center gap-2 text-white/40">
+              <ImageIcon size={16} />
+              <span className="text-[11px] font-bold uppercase tracking-widest">
+                Logo & branding
+              </span>
+            </div>
+
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-center">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex h-24 w-24 flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 border-dashed border-white/10 transition-all hover:border-white/20 hover:bg-white/5"
+                >
+                  {design.logoUrl ? (
+                    <img
+                      src={design.logoUrl}
+                      className="h-full w-full object-contain p-2"
+                      alt="Logo"
+                    />
+                  ) : (
+                    <>
+                      <Plus size={20} className="text-white/20" />
+                      <span className="text-[8px] font-bold text-white/20">
+                        AJOUTER
+                      </span>
+                    </>
+                  )}
+                </button>
+
+                {design.logoUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveLogo}
+                    className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full border border-red-400/30 bg-red-500/90 text-white shadow-lg transition-all hover:scale-105 hover:bg-red-400"
+                    aria-label="Supprimer le logo"
+                    title="Supprimer le logo"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                onChange={handleLogoUpload}
+                className="hidden"
+                accept="image/*"
+              />
+
+              <div className="min-w-0 flex-1 space-y-4">
+                <p className="text-sm leading-6 text-white/45">
+                  Ajoute un logo pour signer le QR sans perdre en lisibilité. La correction
+                  d'erreur passera automatiquement au niveau maximal.
+                </p>
+                <CustomSlider
+                  label="Taille du logo"
+                  value={Math.round(design.logoSize * 100)}
+                  min={10}
+                  max={50}
+                  unit="%"
+                  onChange={(v) => updateField("logoSize", v / 100)}
+                />
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-[28px] border border-white/5 bg-white/[0.02] p-6 shadow-xl">
+            <div className="mb-5 flex items-center gap-2 text-white/40">
+              <span className="text-[11px] font-bold uppercase tracking-widest">
+                Réglages avancés
+              </span>
+            </div>
+
+            <div className="space-y-5">
+              <CustomSlider
+                label="Marge"
+                value={design.margin}
+                min={0}
+                max={50}
+                unit="px"
+                onChange={(v) => updateField("margin", v)}
+              />
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase text-white/40">
+                    Correction d’erreur
+                  </span>
+                  <span className="text-[11px] font-black text-white">
+                    {design.errorCorrectionLevel}
+                  </span>
+                </div>
+
+                <select
+                  value={design.errorCorrectionLevel}
+                  onChange={(e) =>
+                    updateField(
+                      "errorCorrectionLevel",
+                      e.target.value as QrDesignData["errorCorrectionLevel"]
+                    )
+                  }
+                  className="h-12 w-full rounded-xl border border-white/10 bg-black/40 px-4 text-sm text-white outline-none transition-colors focus:border-blue-500"
+                >
+                  <option value="L" className="bg-[#0b1220]">
+                    L — faible
+                  </option>
+                  <option value="M" className="bg-[#0b1220]">
+                    M — moyen
+                  </option>
+                  <option value="Q" className="bg-[#0b1220]">
+                    Q — élevé
+                  </option>
+                  <option value="H" className="bg-[#0b1220]">
+                    H — max
+                  </option>
+                </select>
+              </div>
+            </div>
           </section>
         </div>
       </div>

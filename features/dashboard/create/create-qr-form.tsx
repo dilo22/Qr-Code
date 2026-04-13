@@ -347,7 +347,7 @@ export function CreateQrForm({
   return (
     <div className="w-full pb-6 pt-2 text-white">
       <header className="sticky top-4 z-30 mb-6">
-        <div className="mx-auto w-full max-w-4xl px-2">
+        <div className="mx-auto w-full max-w-[1680px] px-2">
           <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-2xl">
             <nav className="relative flex flex-wrap items-center justify-center gap-2 p-2">
               {STEPS.map((s) => {
@@ -376,8 +376,14 @@ export function CreateQrForm({
         </div>
       </header>
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="min-w-0">
+      <div
+        className={`grid items-start gap-5 xl:gap-6 ${
+          step === "design"
+            ? "grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)_360px]"
+            : "grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px]"
+        }`}
+      >
+        <div className={`order-2 min-w-0 lg:order-1 ${step === "design" ? "2xl:col-span-2" : ""}`}>
           {saveError && (
             <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
               {saveError}
@@ -528,7 +534,7 @@ export function CreateQrForm({
           )}
         </div>
 
-        <aside className="flex flex-col items-center rounded-3xl border border-white/10 bg-[#0A0A0A] p-5 shadow-2xl lg:sticky lg:top-24">
+        <aside className="order-1 flex flex-col items-center rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,10,10,0.98),rgba(5,8,18,0.96))] p-5 shadow-[0_20px_80px_rgba(0,0,0,0.35)] lg:order-2 lg:sticky lg:top-24 lg:self-start">
           <div className="mb-4 flex w-full items-center justify-between gap-2">
             <p className="text-[10px] uppercase tracking-widest text-white/40">Live Preview</p>
 
@@ -551,11 +557,11 @@ export function CreateQrForm({
             </div>
           </div>
 
-          <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl bg-white p-2">
+          <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-[1.75rem] border border-white/10 bg-white p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
             <StyledQrPreview data={qrValue} design={qrDesign as QrDesignData} />
           </div>
 
-          <div className="mt-4 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-[11px] leading-5 text-white/55">
+          <div className="mt-4 w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[11px] leading-5 text-white/55">
             {selectedTypeMode === "dynamic"
               ? "Ce QR pourra suivre les scans via redirection et analytics."
               : "Ce QR sera enregistré et retéléchargeable, mais sans tracking des scans."}
