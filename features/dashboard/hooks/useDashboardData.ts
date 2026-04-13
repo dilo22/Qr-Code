@@ -51,7 +51,7 @@ export function useDashboardData() {
 
       const { data: qrCodes, error: qrCodesError } = await supabase
         .from("qr_codes")
-        .select("*")
+        .select("id, name, title, type, status, created_at, qr_value, qr_mode, design, content")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -86,10 +86,10 @@ export function useDashboardData() {
       }
 
       setScans((qrScans || []) as QRScanItem[]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur dashboard :", error);
       resetDashboardState();
-      setError(error?.message || "Impossible de charger les données.");
+      setError(error instanceof Error ? error.message : "Impossible de charger les données.");
     } finally {
       setLoading(false);
     }
@@ -99,40 +99,37 @@ export function useDashboardData() {
     void loadData();
   }, [loadData]);
 
-  const deleteProject = useCallback(
-    async (projectId: string) => {
-      try {
-        setDeletingId(projectId);
+  const deleteProject = useCallback(async (projectId: string) => {
+    try {
+      setDeletingId(projectId);
 
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
 
-        if (userError) throw userError;
-        if (!user) throw new Error("Utilisateur non connecté.");
+      if (userError) throw userError;
+      if (!user) throw new Error("Utilisateur non connecté.");
 
-        const { error } = await supabase
-          .from("qr_codes")
-          .delete()
-          .eq("id", projectId)
-          .eq("user_id", user.id);
+      const { error } = await supabase
+        .from("qr_codes")
+        .delete()
+        .eq("id", projectId)
+        .eq("user_id", user.id);
 
-        if (error) throw error;
+      if (error) throw error;
 
-        setProjects((prev) => prev.filter((p) => p.id !== projectId));
-        setScans((prev) => prev.filter((s) => s.qr_code_id !== projectId));
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+      setScans((prev) => prev.filter((s) => s.qr_code_id !== projectId));
 
-        return true;
-      } catch (error) {
-        console.error("Erreur suppression QR code :", error);
-        return false;
-      } finally {
-        setDeletingId(null);
-      }
-    },
-    []
-  );
+      return true;
+    } catch (error) {
+      console.error("Erreur suppression QR code :", error);
+      return false;
+    } finally {
+      setDeletingId(null);
+    }
+  }, []);
 
   return {
     loading,

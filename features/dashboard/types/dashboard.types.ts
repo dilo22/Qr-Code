@@ -1,5 +1,13 @@
 import type { QrDesignData } from "@/features/dashboard/create/create-qr-design";
 
+export type QRContentValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: QRContentValue }
+  | QRContentValue[];
+
 export type QRCodeItem = {
   id: string;
   name: string | null;
@@ -8,8 +16,9 @@ export type QRCodeItem = {
   status?: string | null;
   created_at: string;
   qr_value?: string | null;
+  qr_mode?: "dynamic" | "static" | null;
   design?: Partial<QrDesignData> | null;
-  content?: any;
+  content?: QRContentValue;
 };
 
 export type QRScanItem = {
